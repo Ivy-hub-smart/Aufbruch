@@ -28,6 +28,7 @@ export const Aufruf1111: React.FC = () => {
   const line1 = spring({ frame: frame - 30, fps, config: { damping: 14 } });
   const line2 = spring({ frame: frame - 42, fps, config: { damping: 14 } });
   const cta = spring({ frame: frame - 70, fps, config: { damping: 8, stiffness: 140 } });
+  const handle = spring({ frame: frame - 85, fps, config: { damping: 14 } });
   const pulse = frame > 90 ? 1 + Math.sin((frame - 90) / 4) * 0.04 : 1;
 
   const outro = interpolate(frame, [165, 180], [1, 1.04], {
@@ -117,6 +118,24 @@ export const Aufruf1111: React.FC = () => {
         >
           JETZT FOLGEN!
         </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          top: 1770,
+          width: "100%",
+          textAlign: "center",
+          fontFamily: FONT,
+          fontWeight: 900,
+          fontSize: 58,
+          color: "#3de0ff",
+          textShadow: "0 0 24px rgba(61,224,255,0.7)",
+          opacity: handle,
+          transform: `translateY(${(1 - handle) * 40}px)`,
+        }}
+      >
+        @aufbruchsvision
       </div>
     </AbsoluteFill>
   );
