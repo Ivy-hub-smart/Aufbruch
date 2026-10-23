@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #021b26; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      #photo {
+        position: absolute; left: 50%; top: 50%; width: 1215px; height: 2160px;
+        margin: -1080px 0 0 -607.5px;
+        background: url("assets/boot.jpg") center / cover no-repeat;
+      }
+      /* warmes Sonnenlicht von rechts oben */
+      #sun {
+        position: absolute; left: 50%; top: 50%; width: 1400px; height: 1400px; margin: -700px 0 0 -700px;
+        background: radial-gradient(circle, rgba(255,214,150,0.55) 0%, rgba(255,170,120,0.18) 35%, transparent 65%);
+        mix-blend-mode: screen; opacity: 0;
+      }
+      /* Abdunklung oben und unten, damit Text gut lesbar ist */
+      #shade {
+        background: linear-gradient(180deg, rgba(2,20,32,0.55) 0%, rgba(2,20,32,0) 18%, rgba(2,20,32,0) 52%, rgba(2,20,32,0.82) 78%, rgba(2,20,32,0.95) 100%);
+      }
+      #flash { background: #fff; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1080" data-height="1920">
+      <div id="photo" class="clip" data-start="0" data-duration="6" data-track-index="0"></div>
+      <div id="sun" class="clip" data-start="0" data-duration="6" data-track-index="1"></div>
+      <div id="shade" class="clip layer" data-start="0" data-duration="6" data-track-index="2"></div>
+      <div id="flash" class="clip layer" data-start="0" data-duration="6" data-track-index="3"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // langsamer Ken-Burns-Zoom aufs Gesicht
+      tl.fromTo("#photo", { scale: 1.0, y: 0 }, { scale: 1.12, y: 40, duration: 6, ease: "none" }, 0);
+      // Sonnenlicht wandert über das Bild
+      tl.fromTo("#sun", { x: 520, y: -700, opacity: 0 }, { x: 260, y: -420, opacity: 1, duration: 2.5, ease: "sine.inOut" }, 0);
+      tl.to("#sun", { x: -80, y: -300, opacity: 0.6, duration: 3.5, ease: "sine.inOut" }, 2.5);
+      // kurzer Lichtblitz beim Start und vor dem Schluss-Aufruf
+      tl.fromTo("#flash", { opacity: 0.85 }, { opacity: 0, duration: 0.5, ease: "power2.out" }, 0);
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.35, duration: 0.08, yoyo: true, repeat: 1, ease: "none" }, 4.2);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

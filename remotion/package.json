@@ -6,6 +6,7 @@
     "render": "remotion render Aufruf1111 out/aufruf-1111.mp4"
   },
   "dependencies": {
+    "@fontsource/montserrat": "^5.3.0",
     "@remotion/cli": "^4.0.538",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

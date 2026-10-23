@@ -10,6 +10,19 @@ gebaut mit **HyperFrames** und **Remotion**:
 
 Fertiges Video: `remotion/out/aufruf-1111.mp4`
 
+## Video 2: „Gemeinsam wachsen“
+
+6 Sekunden, Foto vollflächig: „Lasst uns einander stärken – Gemeinsam wachsen –
+Gemeinsam ans Ziel – Folgt mir, ich folge euch!“ mit @aufbruchsvision und
+Fortschrittsbalken „11.11. · Ziel: 1111 Follower“.
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Foto mit Zoom, Sonnenlicht, Abdunklung, Lichtblitz | HyperFrames | `hyperframes/photo/index.html` |
+| Texte, Ziel-Leiste, @aufbruchsvision | Remotion | `remotion/src/GemeinsamWachsen.tsx` |
+
+Fertiges Video: `remotion/out/gemeinsam-wachsen.mp4`
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
