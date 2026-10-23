@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 import { Aufruf1111 } from "./Aufruf1111";
 import { GemeinsamWachsen } from "./GemeinsamWachsen";
+import { TanzVideo } from "./TanzVideo";
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -15,6 +16,14 @@ export const RemotionRoot: React.FC = () => (
   <Composition
     id="GemeinsamWachsen"
     component={GemeinsamWachsen}
+    durationInFrames={180} // 6 Sekunden bei 30 fps
+    fps={30}
+    width={1080}
+    height={1920}
+  />
+  <Composition
+    id="TanzVideo"
+    component={TanzVideo}
     durationInFrames={180} // 6 Sekunden bei 30 fps
     fps={30}
     width={1080}

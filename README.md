@@ -23,6 +23,19 @@ Fortschrittsbalken „11.11. · Ziel: 1111 Follower“.
 
 Fertiges Video: `remotion/out/gemeinsam-wachsen.mp4`
 
+## Video 3: Tanz-Video
+
+6 Sekunden mit eigenem Beat (120 BPM): Freisteller aus dem Bootsfoto „tanzt“
+im Takt (Wippen, Hüpfen, Drehen) vor Disco-Lichtern. Texte: „Lasst uns gemeinsam
+wachsen! – 11.11. · Ziel: 1111 Follower – Folgt mir, ich folge euch!“
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Freistellen (`hyperframes remove-background`), Tanzbewegung, Lichter | HyperFrames | `hyperframes/dance/index.html` |
+| Texte im Takt, @aufbruchsvision, Musik | Remotion | `remotion/src/TanzVideo.tsx`, `remotion/scripts/beat.py` |
+
+Fertiges Video: `remotion/out/tanz-video.mp4`
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
