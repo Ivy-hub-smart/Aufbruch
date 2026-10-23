@@ -1,0 +1,10 @@
+{
+  "name": "aufbruch-1111-video",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix hyperframes install && npm --prefix remotion install",
+    "render:bg": "cd hyperframes/bg && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-bg.mp4",
+    "render:video": "cd remotion && npx remotion render Aufruf1111 out/aufruf-1111.mp4",
+    "render": "npm run render:bg && npm run render:video"
+  }
+}
