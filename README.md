@@ -36,6 +36,20 @@ wachsen! – 11.11. · Ziel: 1111 Follower – Folgt mir, ich folge euch!“
 
 Fertiges Video: `remotion/out/tanz-video.mp4`
 
+## Video 4: „Was, wenn ich es nicht schaffe?“
+
+6 Sekunden, Freisteller der Frau aus dem Urlaubsfoto. Bis 3 s grau mit Regen
+(„Was, wenn ich es nicht schaffe? – …finanziell frei zu sein? Ein zweites
+Standbein?“), dann Lichtblitz und Urlaubstraum in Farbe mit Sonne, Meer und
+Palmen („Und was, wenn doch? – Zweifeln ist erlaubt. Aufgeben nicht.“).
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Freisteller, Regen, Umschwung Grau → Farbe, Sonne, Palmen | HyperFrames | `hyperframes/traum/index.html` |
+| Texte, @aufbruchsvision | Remotion | `remotion/src/ZweifelTraum.tsx` |
+
+Fertiges Video: `remotion/out/zweifel-traum.mp4`
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.

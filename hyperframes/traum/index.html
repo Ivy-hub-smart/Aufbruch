@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #1c1f26; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      /* Zweifel: kühles Grau, Regen */
+      #grey { background: radial-gradient(ellipse at 50% 35%, #4a505c 0%, #23262e 60%, #15171c 100%); }
+      .drop { position: absolute; width: 3px; height: 70px; background: linear-gradient(180deg, transparent, rgba(200,215,235,0.55)); }
+      /* Traum: tropischer Himmel, Sonne, Strahlen */
+      #dream { opacity: 0; background: linear-gradient(180deg, #00b4d8 0%, #48cae4 35%, #ffd166 75%, #ff8fab 100%); }
+      #sun {
+        position: absolute; left: 50%; top: 520px; width: 520px; height: 520px; margin-left: -260px; border-radius: 50%;
+        background: radial-gradient(circle, #fff7c2 0%, #ffd23f 45%, rgba(255,210,63,0) 70%);
+      }
+      #rays { position: absolute; left: 50%; top: 780px; width: 0; height: 0; }
+      .ray {
+        position: absolute; left: -40px; bottom: 0; width: 80px; height: 1500px; transform-origin: 50% 100%;
+        background: linear-gradient(0deg, rgba(255,255,255,0.45), transparent 85%); mix-blend-mode: screen;
+      }
+      #sea {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 520px;
+        background: linear-gradient(180deg, #0096c7 0%, #023e8a 100%);
+      }
+      .palm { position: absolute; bottom: 380px; font-size: 300px; line-height: 1; }
+      .me {
+        position: absolute; left: 50%; bottom: 0; width: 1080px; height: 1350px; margin-left: -540px;
+        background: url("assets/ich.png") center bottom / contain no-repeat;
+        transform-origin: 50% 100%;
+      }
+      #meGrey { filter: grayscale(1) brightness(0.75) contrast(1.05); }
+      #meColor { opacity: 0; filter: drop-shadow(0 0 40px rgba(255,255,255,0.6)) saturate(1.15); }
+      #flash { background: #fff; opacity: 0; }
+      .spark { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 18px 6px rgba(255,240,180,0.9); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1080" data-height="1920">
+      <div id="grey" class="clip layer" data-start="0" data-duration="6" data-track-index="0"></div>
+      <div id="dream" class="clip layer" data-start="0" data-duration="6" data-track-index="1"></div>
+      <div id="meGrey" class="clip me" data-start="0" data-duration="6" data-track-index="2"></div>
+      <div id="meColor" class="clip me" data-start="0" data-duration="6" data-track-index="3"></div>
+      <div id="fx" class="clip layer" data-start="0" data-duration="6" data-track-index="4"></div>
+      <div id="flash" class="clip layer" data-start="0" data-duration="6" data-track-index="5"></div>
+    </div>
+    <script>
+      let seed = 4242;
+      const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      // Regen für die Zweifel-Phase
+      const grey = document.getElementById("grey");
+      const drops = [];
+      for (let i = 0; i < 60; i++) {
+        const d = document.createElement("div");
+        d.className = "drop";
+        d.style.left = rand() * 1080 + "px";
+        d.style.top = -100 - rand() * 1900 + "px";
+        grey.appendChild(d);
+        drops.push(d);
+      }
+
+      // Traum-Szene: Sonne, Strahlen, Meer, Palmen
+      const dream = document.getElementById("dream");
+      dream.innerHTML = '<div id="rays">' +
+        Array.from({ length: 12 }, (_, i) => `<div class="ray" style="transform: rotate(${i * 30}deg)"></div>`).join("") +
+        '</div><div id="sun"></div><div id="sea"></div>' +
+        '<div class="palm" style="left:-60px">🌴</div><div class="palm" style="right:-60px; transform: scaleX(-1)">🌴</div>';
+
+      const fx = document.getElementById("fx");
+      const sparks = [];
+      for (let i = 0; i < 36; i++) {
+        const s = document.createElement("div");
+        s.className = "spark";
+        s.style.left = rand() * 1040 + "px";
+        s.style.top = 300 + rand() * 1300 + "px";
+        fx.appendChild(s);
+        sparks.push(s);
+      }
+
+      const SWITCH = 3; // ab hier: "Und was, wenn doch?"
+      const tl = gsap.timeline({ paused: true });
+
+      // Zweifel: Regen fällt, Bild sinkt langsam, leicht zusammengesunken
+      drops.forEach((d, i) => {
+        tl.fromTo(d, { y: 0 }, { y: 2300, duration: 1.1 + (i % 5) * 0.15, ease: "none", repeat: 2 }, 0);
+      });
+      tl.fromTo(".me", { scale: 1.08, y: 40 }, { scale: 1, y: 70, duration: SWITCH, ease: "sine.inOut" }, 0);
+
+      // Umschwung: Blitz, Farbe kommt, Freisteller springt hoch
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.in" }, SWITCH - 0.12);
+      tl.set("#dream", { opacity: 1 }, SWITCH);
+      tl.set("#meColor", { opacity: 1 }, SWITCH);
+      tl.set("#meGrey", { opacity: 0 }, SWITCH);
+      tl.set(drops, { opacity: 0 }, SWITCH);
+      tl.to("#flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, SWITCH);
+      tl.fromTo("#meColor", { scale: 0.9, y: 70 }, { scale: 1.04, y: 0, duration: 0.7, ease: "back.out(2.2)" }, SWITCH);
+      tl.to("#meColor", { scale: 1.1, duration: SWITCH - 0.7, ease: "sine.inOut" }, SWITCH + 0.7);
+      tl.fromTo("#rays", { rotation: 0 }, { rotation: 40, duration: SWITCH, ease: "none" }, SWITCH);
+      tl.fromTo("#sun", { scale: 0.6 }, { scale: 1.15, duration: 1.2, ease: "power2.out" }, SWITCH);
+      tl.fromTo(".palm", { y: 200 }, { y: 0, duration: 0.8, ease: "back.out(1.6)" }, SWITCH + 0.1);
+
+      sparks.forEach((s, i) => {
+        tl.fromTo(s, { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1.2, duration: 0.18, yoyo: true, repeat: 1, ease: "power1.out" }, SWITCH + ((i * 0.29) % 2.8));
+      });
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
