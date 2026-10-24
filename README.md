@@ -50,6 +50,21 @@ Palmen („Und was, wenn doch? – Zweifeln ist erlaubt. Aufgeben nicht.“).
 
 Fertiges Video: `remotion/out/zweifel-traum.mp4`
 
+## Video 5: „Meine Wünsche bekommen ein Gesicht“ (KI-Zwilling)
+
+6 Sekunden. Sonntagabend unter Sternen, die Uhr rast, ich in Grau („Sonntagabend.
+Morgen gehört meine Zeit wieder anderen.“). Dann löst sich mein Zwilling als
+leuchtendes Hologramm aus mir heraus („Meine Wünsche bekommen ein Gesicht.“),
+Lichtblitz, Morgenlicht, der Zwilling wird echt („Ich will meine Zeit selbst
+bestimmen.“).
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Nacht, Uhr, Zwilling mit Hologramm-Linien, Morgenlicht | HyperFrames | `hyperframes/zwilling/index.html` |
+| Texte, @aufbruchsvision | Remotion | `remotion/src/Zwilling.tsx` |
+
+Fertiges Video: `remotion/out/zwilling.mp4`
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0b1030; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      /* Sonntagabend: Nachtblau, Mond, Sterne */
+      #night { background: linear-gradient(180deg, #070b26 0%, #16205a 55%, #3b2a6e 100%); }
+      #moon {
+        position: absolute; right: 120px; top: 560px; width: 150px; height: 150px; border-radius: 50%;
+        box-shadow: -34px 18px 0 0 #fff3c4; filter: drop-shadow(0 0 30px rgba(255,243,196,0.6));
+      }
+      .star { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+      /* Uhr: Zeit, die anderen gehört */
+      #clock {
+        position: absolute; left: 90px; top: 560px; width: 210px; height: 210px; border-radius: 50%;
+        border: 10px solid rgba(255,255,255,0.85); background: rgba(255,255,255,0.08);
+      }
+      .hand { position: absolute; left: 50%; bottom: 50%; background: #fff; border-radius: 6px; transform-origin: 50% 100%; }
+      #hHour { width: 12px; height: 55px; margin-left: -6px; }
+      #hMin { width: 8px; height: 80px; margin-left: -4px; background: #ff6b8b; }
+      /* Wunsch: Sonnenaufgang */
+      #dawn { opacity: 0; background: linear-gradient(180deg, #ffb3c7 0%, #ffd6a5 40%, #fff1b8 70%, #ffffff 100%); }
+      #halo {
+        position: absolute; left: 50%; top: 1050px; width: 1400px; height: 1400px; margin: -700px 0 0 -700px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,214,165,0.6) 35%, transparent 65%);
+      }
+      .me {
+        position: absolute; left: 50%; bottom: 0; width: 1080px; height: 1350px; margin-left: -540px;
+        background: url("assets/ich.png") center bottom / contain no-repeat;
+        transform-origin: 50% 100%;
+      }
+      #meNow { filter: grayscale(1) brightness(0.6); }
+      /* Zwilling: Hologramm-Look, Maske = Freisteller */
+      #twin { opacity: 0; filter: drop-shadow(0 0 30px rgba(120,230,255,0.9)) saturate(1.2); }
+      #scan {
+        opacity: 0;
+        -webkit-mask: url("assets/ich.png") center bottom / contain no-repeat; mask: url("assets/ich.png") center bottom / contain no-repeat;
+        background: repeating-linear-gradient(0deg, rgba(140,240,255,0.55) 0 4px, transparent 4px 14px);
+        mix-blend-mode: screen;
+      }
+      #flash { background: #fff; opacity: 0; }
+      .spark { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 18px 6px rgba(140,240,255,0.9); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1080" data-height="1920">
+      <div id="night" class="clip layer" data-start="0" data-duration="6" data-track-index="0"></div>
+      <div id="dawn" class="clip layer" data-start="0" data-duration="6" data-track-index="1"></div>
+      <div id="meNow" class="clip me" data-start="0" data-duration="6" data-track-index="2"></div>
+      <div id="twin" class="clip me" data-start="0" data-duration="6" data-track-index="3"></div>
+      <div id="scan" class="clip me" data-start="0" data-duration="6" data-track-index="4"></div>
+      <div id="fx" class="clip layer" data-start="0" data-duration="6" data-track-index="5"></div>
+      <div id="flash" class="clip layer" data-start="0" data-duration="6" data-track-index="6"></div>
+    </div>
+    <script>
+      let seed = 777;
+      const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      const night = document.getElementById("night");
+      night.innerHTML = '<div id="moon"></div><div id="clock"><div class="hand" id="hHour"></div><div class="hand" id="hMin"></div></div>';
+      const stars = [];
+      for (let i = 0; i < 50; i++) {
+        const s = document.createElement("div");
+        s.className = "star";
+        s.style.left = rand() * 1080 + "px";
+        s.style.top = rand() * 1100 + "px";
+        night.appendChild(s);
+        stars.push(s);
+      }
+      document.getElementById("dawn").innerHTML = '<div id="halo"></div>';
+
+      const fx = document.getElementById("fx");
+      const sparks = [];
+      for (let i = 0; i < 40; i++) {
+        const s = document.createElement("div");
+        s.className = "spark";
+        s.style.left = 200 + rand() * 700 + "px";
+        s.style.top = 600 + rand() * 1200 + "px";
+        fx.appendChild(s);
+        sparks.push(s);
+      }
+
+      const SPLIT = 2; // Zwilling tritt heraus
+      const DREAM = 4; // Wunsch übernimmt
+      const tl = gsap.timeline({ paused: true });
+
+      // Sonntagabend: Sterne funkeln, Uhr rast, Bild sinkt leicht
+      stars.forEach((s, i) => {
+        tl.fromTo(s, { opacity: 0.2 }, { opacity: 1, duration: 0.6, yoyo: true, repeat: 3, ease: "sine.inOut" }, (i * 0.13) % 1.2);
+      });
+      tl.fromTo("#hMin", { rotation: 0 }, { rotation: 720 * 2, duration: SPLIT, ease: "power1.in" }, 0);
+      tl.fromTo("#hHour", { rotation: 200 }, { rotation: 320, duration: SPLIT, ease: "power1.in" }, 0);
+      tl.fromTo("#meNow", { scale: 1.05, y: 30 }, { scale: 1, y: 60, duration: SPLIT, ease: "sine.inOut" }, 0);
+
+      // Uhr bleibt stehen, Zwilling löst sich aus mir heraus nach rechts
+      tl.to("#clock", { scale: 0.85, opacity: 0.4, duration: 0.4 }, SPLIT);
+      tl.to("#meNow", { x: -300, scale: 0.72, duration: 0.8, ease: "power3.out" }, SPLIT);
+      tl.fromTo(["#twin", "#scan"], { x: -300, y: 60, scale: 0.72, opacity: 0 },
+        { x: 220, scale: 0.84, opacity: 1, duration: 0.8, ease: "power3.out" }, SPLIT);
+      tl.fromTo("#scan", { backgroundPositionY: "0px" }, { backgroundPositionY: "280px", duration: DREAM - SPLIT, ease: "none" }, SPLIT);
+      sparks.forEach((s, i) => {
+        tl.fromTo(s, { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1.2, duration: 0.18, yoyo: true, repeat: 1, ease: "power1.out" }, SPLIT + ((i * 0.31) % 3.8));
+      });
+
+      // Wunsch übernimmt: Blitz, Morgenlicht, Zwilling wird echt und tritt nach vorn
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.9, duration: 0.12, ease: "power2.in" }, DREAM - 0.12);
+      tl.set("#dawn", { opacity: 1 }, DREAM);
+      tl.set("#scan", { opacity: 0 }, DREAM);
+      tl.set("#twin", { filter: "drop-shadow(0 0 40px rgba(255,255,255,0.9)) saturate(1.15)" }, DREAM);
+      tl.to("#flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, DREAM);
+      tl.to("#meNow", { opacity: 0, x: -420, duration: 0.5, ease: "power2.out" }, DREAM);
+      tl.to("#twin", { x: 0, y: 0, scale: 1.05, duration: 0.7, ease: "back.out(1.8)" }, DREAM);
+      tl.to("#twin", { scale: 1.1, duration: 6 - DREAM - 0.7, ease: "sine.inOut" }, DREAM + 0.7);
+      tl.fromTo("#halo", { scale: 0.6 }, { scale: 1.1, duration: 1.5, ease: "power2.out" }, DREAM);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
