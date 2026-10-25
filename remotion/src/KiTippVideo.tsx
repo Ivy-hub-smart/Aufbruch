@@ -30,11 +30,23 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip }) => {
   const ctaIn = spring({ frame: frame - OUTRO - 22, fps, config: { damping: 14 } });
   const handleIn = spring({ frame: frame - OUTRO - 12, fps, config: { damping: 12 } });
   const progress = frame / (durationInFrames - 1);
+  // im echten Video laufe ich in die Bildmitte: Karten und Fazit dann unten über dem Wasser
+  const real = Boolean(clip || tipp.clip);
+  const lower = real ? 560 : 0;
 
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
-      {clip ? (
-        <OffthreadVideo src={staticFile(clip)} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      {clip || tipp.clip ? (
+        <>
+          <OffthreadVideo
+            src={staticFile(clip ?? tipp.clip!.src)}
+            playbackRate={clip ? 1 : tipp.clip!.rate}
+            muted
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          {/* echtes Video ist hell: oben abdunkeln, damit der Text lesbar bleibt */}
+          <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 50%, transparent 70%)" }} />
+        </>
       ) : (
         <OffthreadVideo src={staticFile(tipp.bg)} muted />
       )}
@@ -91,7 +103,7 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip }) => {
             key={step}
             style={{
               position: "absolute",
-              top: 560 + i * 150,
+              top: 560 + lower + i * 150,
               left: 60,
               right: 60,
               display: "flex",
@@ -129,7 +141,7 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip }) => {
 
       {/* Fazit und Aufruf */}
       {frame >= OUTRO && (
-        <div style={{ position: "absolute", top: 600, width: "100%", padding: "0 60px", textAlign: "center" }}>
+        <div style={{ position: "absolute", top: 600 + lower, width: "100%", padding: "0 60px", textAlign: "center" }}>
           <div
             style={{
               fontWeight: 900,

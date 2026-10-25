@@ -14,11 +14,7 @@
     "render:zweifel": "cd remotion && npx remotion render ZweifelTraum out/zweifel-traum.mp4",
     "render:zwilling-bg": "cd hyperframes/zwilling && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-zwilling.mp4",
     "render:zwilling": "cd remotion && npx remotion render Zwilling out/zwilling.mp4",
-    "render:see-morgen": "cd hyperframes/see-morgen && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-see-morgen.mp4",
-    "render:see-abend": "cd hyperframes/see-abend && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-see-abend.mp4",
-    "render:wind-wiese": "cd hyperframes/wind-wiese && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wind-wiese.mp4",
-    "render:wind-ufer": "cd hyperframes/wind-ufer && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wind-ufer.mp4",
-    "render:ki-szenen": "npm run render:see-morgen && npm run render:see-abend && npm run render:wind-wiese && npm run render:wind-ufer",
+    "render:ki-szenen": "bash hyperframes/scripts/render-ki-szenen.sh",
     "render:ki-tipps": "cd remotion && for i in 1 2 3 4 5 6 7 8; do npx remotion render KiTipp$i out/ki-tipp-$i.mp4 || exit 1; done"
   }
 }

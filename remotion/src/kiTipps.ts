@@ -2,6 +2,7 @@
 export type KiTipp = {
   id: string;
   bg: string; // gerendertes HyperFrames-Video in public/
+  clip?: { src: string; rate: number }; // echtes Video statt Szene, verlangsamt auf 10 s
   accent: string;
   small: string;
   big: string;
@@ -18,7 +19,7 @@ const UFER = "linear-gradient(90deg, #3a0ca3 0%, #4895ef 100%)";
 export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp1",
-    bg: "hyperframes-see-morgen.mp4",
+    bg: "hyperframes-ki-1.mp4",
     accent: SEE,
     small: "2. Einkommen mit KI:",
     big: "Digitale Produkte verkaufen",
@@ -32,7 +33,7 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp2",
-    bg: "hyperframes-wind-wiese.mp4",
+    bg: "hyperframes-ki-2.mp4",
     accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Social Media für lokale Firmen",
@@ -46,7 +47,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp3",
-    bg: "hyperframes-see-abend.mp4",
+    bg: "",
+    clip: { src: "spaziergang-pool.mp4", rate: 0.65 },
     accent: ABEND,
     small: "2. Einkommen mit KI:",
     big: "Kurzvideos ohne Stress",
@@ -60,7 +62,7 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp4",
-    bg: "hyperframes-wind-ufer.mp4",
+    bg: "hyperframes-ki-4.mp4",
     accent: UFER,
     small: "2. Einkommen mit KI:",
     big: "Prompt-Vorlagen verkaufen",
@@ -74,7 +76,7 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp5",
-    bg: "hyperframes-see-morgen.mp4",
+    bg: "hyperframes-ki-5.mp4",
     accent: SEE,
     small: "2. Einkommen mit KI:",
     big: "Affiliate mit KI-Content",
@@ -88,7 +90,7 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp6",
-    bg: "hyperframes-wind-wiese.mp4",
+    bg: "hyperframes-ki-6.mp4",
     accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Print-on-Demand mit KI-Designs",
@@ -102,7 +104,7 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp7",
-    bg: "hyperframes-see-abend.mp4",
+    bg: "hyperframes-ki-7.mp4",
     accent: ABEND,
     small: "2. Einkommen mit KI:",
     big: "Bring anderen KI bei",
@@ -116,7 +118,7 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp8",
-    bg: "hyperframes-wind-ufer.mp4",
+    bg: "hyperframes-ki-8.mp4",
     accent: UFER,
     small: "Der wichtigste Tipp:",
     big: "Dranbleiben schlägt Talent",
