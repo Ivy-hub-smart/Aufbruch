@@ -5,7 +5,7 @@
     "install:all": "npm --prefix hyperframes install && npm --prefix remotion install",
     "render:bg": "cd hyperframes/bg && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-bg.mp4",
     "render:video": "cd remotion && npx remotion render Aufruf1111 out/aufruf-1111.mp4",
-    "render": "npm run render:bg && npm run render:video && npm run render:photo && npm run render:gemeinsam && npm run render:dance && npm run render:tanz && npm run render:traum && npm run render:zweifel && npm run render:zwilling-bg && npm run render:zwilling",
+    "render": "npm run render:bg && npm run render:video && npm run render:photo && npm run render:gemeinsam && npm run render:dance && npm run render:tanz && npm run render:traum && npm run render:zweifel && npm run render:zwilling-bg && npm run render:zwilling && npm run render:ki-szenen && npm run render:ki-tipps",
     "render:photo": "cd hyperframes/photo && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-photo.mp4",
     "render:gemeinsam": "cd remotion && npx remotion render GemeinsamWachsen out/gemeinsam-wachsen.mp4",
     "render:dance": "cd hyperframes/dance && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-dance.mp4",
@@ -13,6 +13,12 @@
     "render:traum": "cd hyperframes/traum && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-traum.mp4",
     "render:zweifel": "cd remotion && npx remotion render ZweifelTraum out/zweifel-traum.mp4",
     "render:zwilling-bg": "cd hyperframes/zwilling && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-zwilling.mp4",
-    "render:zwilling": "cd remotion && npx remotion render Zwilling out/zwilling.mp4"
+    "render:zwilling": "cd remotion && npx remotion render Zwilling out/zwilling.mp4",
+    "render:see-morgen": "cd hyperframes/see-morgen && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-see-morgen.mp4",
+    "render:see-abend": "cd hyperframes/see-abend && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-see-abend.mp4",
+    "render:wind-wiese": "cd hyperframes/wind-wiese && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wind-wiese.mp4",
+    "render:wind-ufer": "cd hyperframes/wind-ufer && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wind-ufer.mp4",
+    "render:ki-szenen": "npm run render:see-morgen && npm run render:see-abend && npm run render:wind-wiese && npm run render:wind-ufer",
+    "render:ki-tipps": "cd remotion && for i in 1 2 3 4 5 6 7 8; do npx remotion render KiTipp$i out/ki-tipp-$i.mp4 || exit 1; done"
   }
 }

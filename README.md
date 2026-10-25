@@ -65,6 +65,44 @@ bestimmen.“).
 
 Fertiges Video: `remotion/out/zwilling.mp4`
 
+## Serie „2. Einkommen mit KI“ (8 Videos)
+
+Acht Videos à 10 Sekunden. Ich laufe am See oder im Wind, dazu je ein KI-Tipp:
+Überschrift, drei Schritte als Karten, Fazit und „Speichern & folgen“.
+
+| Nr | Tipp | Szene | Video |
+|---|---|---|---|
+| 1 | Digitale Produkte verkaufen | Morgen am See | `remotion/out/ki-tipp-1.mp4` |
+| 2 | Social Media für lokale Firmen | Wind auf der Wiese | `remotion/out/ki-tipp-2.mp4` |
+| 3 | Kurzvideos ohne Stress | Abend am Steg | `remotion/out/ki-tipp-3.mp4` |
+| 4 | Prompt-Vorlagen verkaufen | Gegenwind am Ufer | `remotion/out/ki-tipp-4.mp4` |
+| 5 | Affiliate mit KI-Content | Morgen am See | `remotion/out/ki-tipp-5.mp4` |
+| 6 | Print-on-Demand mit KI-Designs | Wind auf der Wiese | `remotion/out/ki-tipp-6.mp4` |
+| 7 | Bring anderen KI bei | Abend am Steg | `remotion/out/ki-tipp-7.mp4` |
+| 8 | Dranbleiben schlägt Talent | Gegenwind am Ufer | `remotion/out/ki-tipp-8.mp4` |
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Morgen am See: Berge, Sonnenaufgang, Nebel, Schilf zieht vorbei | HyperFrames | `hyperframes/see-morgen/index.html` |
+| Abend am Steg: Sonnenuntergang, Segelboote, Sonnenpfad | HyperFrames | `hyperframes/see-abend/index.html` |
+| Wind auf der Wiese: Wolken jagen, Gras wogt, Blätter fliegen | HyperFrames | `hyperframes/wind-wiese/index.html` |
+| Gegenwind am Ufer: Sturm und Wellen, dann bricht die Sonne durch | HyperFrames | `hyperframes/wind-ufer/index.html` |
+| Tipps, Karten, Fazit, @aufbruchsvision | Remotion | `remotion/src/KiTippVideo.tsx`, Texte in `remotion/src/kiTipps.ts` |
+
+Texte ändern: `remotion/src/kiTipps.ts` bearbeiten, dann `npm run render:ki-tipps`.
+
+### Mit deinem eigenen Spaziergang-Video
+
+Filme dich im Hochformat beim Laufen am See oder im Wind, lege das Video als
+`remotion/public/mein-spaziergang.mp4` ab und rendere einen Tipp darüber:
+
+```bash
+cd remotion
+npx remotion render KiTipp1 out/ki-tipp-1-echt.mp4 --props='{"nr":1,"clip":"mein-spaziergang.mp4"}'
+```
+
+Das Video sollte mindestens 10 Sekunden lang sein. Oben im Bild ist Platz für den Text.
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.

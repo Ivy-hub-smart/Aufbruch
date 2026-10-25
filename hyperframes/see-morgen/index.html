@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #ffd9c7; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      /* Morgen am See: rosa Himmel, Sonne steigt hinter den Bergen auf */
+      #sky { background: linear-gradient(180deg, #7fb8e6 0%, #b9d6ef 30%, #ffd2c2 58%, #ffe7b8 66%); }
+      #sun {
+        position: absolute; left: 640px; top: 900px; width: 220px; height: 220px; border-radius: 50%;
+        background: radial-gradient(circle, #fffbe8 0%, #ffe9a8 55%, #ffc97a 100%);
+        box-shadow: 0 0 120px 60px rgba(255,226,150,0.65);
+      }
+      .ridge { position: absolute; left: 0; width: 4320px; }
+      #far { top: 760px; height: 420px; }
+      #near { top: 880px; height: 360px; }
+      #lake {
+        position: absolute; left: 0; right: 0; top: 1150px; bottom: 0;
+        background: linear-gradient(180deg, #a9c9e2 0%, #6d9fc7 35%, #3f7aa8 100%);
+      }
+      #glow {
+        position: absolute; left: 700px; top: 1150px; width: 140px; height: 770px; margin-left: -70px;
+        background: linear-gradient(180deg, rgba(255,240,190,0.9), rgba(255,240,190,0) 90%);
+        filter: blur(18px);
+      }
+      .glint { position: absolute; height: 5px; border-radius: 5px; background: #fff7d6; opacity: 0; }
+      .mist {
+        position: absolute; left: -400px; width: 2200px; height: 160px; border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(255,255,255,0.75), rgba(255,255,255,0) 70%);
+      }
+      .bird { position: absolute; width: 46px; height: 16px; }
+      .bird::before, .bird::after {
+        content: ""; position: absolute; top: 0; width: 24px; height: 12px;
+        border-top: 4px solid #3a4a66; border-radius: 50% 50% 0 0;
+      }
+      .bird::before { left: 0; } .bird::after { right: 0; }
+      #shore { position: absolute; left: 0; bottom: 0; width: 4320px; height: 420px; }
+      #me {
+        position: absolute; left: 50%; bottom: -30px; width: 900px; height: 980px; margin-left: -450px;
+        background: url("assets/ich.png") center bottom / contain no-repeat;
+        transform-origin: 50% 100%;
+        filter: drop-shadow(0 0 40px rgba(255,236,200,0.7));
+      }
+      #light {
+        background: radial-gradient(circle at 70% 55%, rgba(255,240,200,0.45), transparent 55%);
+        mix-blend-mode: screen;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div id="sky" class="clip layer" data-start="0" data-duration="10" data-track-index="0"></div>
+      <div id="land" class="clip layer" data-start="0" data-duration="10" data-track-index="1"></div>
+      <div id="water" class="clip layer" data-start="0" data-duration="10" data-track-index="2"></div>
+      <div id="me" class="clip" data-start="0" data-duration="10" data-track-index="3"></div>
+      <div id="light" class="clip layer" data-start="0" data-duration="10" data-track-index="4"></div>
+    </div>
+    <script>
+      let seed = 2024;
+      const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      // Bergkette als SVG, doppelt so breit, damit sie beim Gehen vorbeiziehen kann
+      const ridge = (id, color, peaks, base, snow) => {
+        let d = `M0 ${base}`;
+        const tops = [];
+        for (let x = 0; x <= 4320; x += 4320 / peaks) {
+          const h = 40 + rand() * (base - 80);
+          d += ` L${x + 2160 / peaks} ${h} L${x + 4320 / peaks} ${base * 0.55 + rand() * base * 0.3}`;
+          tops.push([x + 2160 / peaks, h]);
+        }
+        d += ` L4320 ${base} Z`;
+        const caps = snow
+          ? tops.map(([x, y]) => `<path d="M${x} ${y} L${x - 60} ${y + 70} L${x - 20} ${y + 55} L${x + 10} ${y + 80} L${x + 60} ${y + 70} Z" fill="#ffffff" opacity="0.9"/>`).join("")
+          : "";
+        return `<svg class="ridge" id="${id}" viewBox="0 0 4320 ${base}" preserveAspectRatio="none"><path d="${d}" fill="${color}"/>${caps}</svg>`;
+      };
+
+      document.getElementById("sky").innerHTML = '<div id="sun"></div>' +
+        [0, 1, 2, 3, 4].map((i) => `<div class="bird" style="left:${120 + i * 70}px;top:${420 + (i % 2) * 40}px"></div>`).join("");
+      document.getElementById("land").innerHTML =
+        ridge("far", "#8fa6c9", 22, 420, true) + ridge("near", "#4f6f8f", 16, 360, false);
+
+      // See: Glitzern, Nebel, Ufer mit Schilf
+      const water = document.getElementById("water");
+      water.innerHTML = '<div id="lake"></div><div id="glow"></div>' +
+        '<div class="mist" style="top:1110px"></div><div class="mist" style="top:1220px;opacity:0.6"></div>';
+      const glints = [];
+      for (let i = 0; i < 70; i++) {
+        const g = document.createElement("div");
+        g.className = "glint";
+        const y = 1170 + rand() * 720;
+        g.style.top = y + "px";
+        g.style.left = rand() * 1040 + "px";
+        g.style.width = 20 + rand() * 70 + "px";
+        water.appendChild(g);
+        glints.push(g);
+      }
+      let reeds = "";
+      for (let x = 0; x < 4320; x += 26) {
+        const h = 120 + rand() * 260;
+        reeds += `<path d="M${x} 420 Q${x + 10} ${420 - h / 2} ${x + 4 + rand() * 30} ${420 - h}" stroke="#2f5a3a" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+        if (rand() > 0.7) reeds += `<ellipse cx="${x + 6}" cy="${430 - h * 0.85}" rx="9" ry="30" fill="#6b4a2b"/>`;
+      }
+      water.insertAdjacentHTML("beforeend",
+        `<svg id="shore" viewBox="0 0 4320 420"><rect x="0" y="360" width="4320" height="60" fill="#3d6b45"/>${reeds}</svg>`);
+
+      const D = 10;
+      const tl = gsap.timeline({ paused: true });
+
+      // Sonne steigt, Himmel wird heller
+      tl.fromTo("#sun", { y: 0 }, { y: -330, duration: D, ease: "sine.out" }, 0);
+      tl.fromTo("#glow", { opacity: 0.5 }, { opacity: 1, duration: D, ease: "sine.out" }, 0);
+      tl.fromTo("#light", { opacity: 0.4 }, { opacity: 1, duration: D }, 0);
+
+      // Spaziergang: Landschaft zieht vorbei (Parallaxe)
+      tl.fromTo("#far", { x: 0 }, { x: -260, duration: D, ease: "none" }, 0);
+      tl.fromTo("#near", { x: 0 }, { x: -520, duration: D, ease: "none" }, 0);
+      tl.fromTo("#shore", { x: 0 }, { x: -1600, duration: D, ease: "none" }, 0);
+      tl.fromTo(".mist", { x: 0 }, { x: -300, duration: D, ease: "none" }, 0);
+      tl.fromTo(".bird", { x: 0, y: 0 }, { x: 760, y: -160, duration: D, ease: "none" }, 0);
+      tl.fromTo(".bird", { scaleY: 1 }, { scaleY: 0.4, duration: 0.25, yoyo: true, repeat: 39, ease: "sine.inOut" }, 0);
+
+      glints.forEach((g, i) => {
+        tl.fromTo(g, { opacity: 0 }, { opacity: 0.95, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, (i * 0.37) % 9.2);
+      });
+
+      // Schritte: leichtes Wippen und Pendeln, 2 Schritte pro Sekunde
+      tl.fromTo("#me", { y: 0 }, { y: -16, duration: 0.25, yoyo: true, repeat: 39, ease: "sine.inOut" }, 0);
+      tl.fromTo("#me", { rotation: -1.2 }, { rotation: 1.2, duration: 0.5, yoyo: true, repeat: 19, ease: "sine.inOut" }, 0);
+      tl.fromTo("#me", { scale: 1 }, { scale: 1.05, duration: D, ease: "none" }, 0);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
