@@ -4,7 +4,7 @@ import { GemeinsamWachsen } from "./GemeinsamWachsen";
 import { TanzVideo } from "./TanzVideo";
 import { ZweifelTraum } from "./ZweifelTraum";
 import { Zwilling } from "./Zwilling";
-import { KiTippVideo } from "./KiTippVideo";
+import { KiTippVideo, kiTippSchema } from "./KiTippVideo";
 import { KI_TIPPS } from "./kiTipps";
 
 export const RemotionRoot: React.FC = () => (
@@ -54,11 +54,12 @@ export const RemotionRoot: React.FC = () => (
       key={tipp.id}
       id={tipp.id}
       component={KiTippVideo}
+      schema={kiTippSchema}
       durationInFrames={300} // 10 Sekunden bei 30 fps
       fps={30}
       width={1080}
       height={1920}
-      defaultProps={{ nr: i + 1 }}
+      defaultProps={{ nr: i + 1, label: `KI-NEBENEINKOMMEN · TIPP ${i + 1}/${KI_TIPPS.length}`, small: tipp.small, big: tipp.big, steps: tipp.steps, fazit: tipp.fazit, cta: tipp.cta }}
     />
   ))}
   </>

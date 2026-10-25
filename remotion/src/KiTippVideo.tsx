@@ -9,19 +9,31 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { z } from "zod";
 import { KI_TIPPS } from "./kiTipps";
 
 const FONT = "Montserrat, sans-serif";
 const STEP_IN = [70, 110, 150]; // Karten kommen nacheinander
 const OUTRO = 228; // Karten weg, Fazit kommt
 
-// clip: eigenes Spaziergang-Video in public/ statt der HyperFrames-Szene
-export type KiTippProps = { nr: number; clip?: string };
+// Alle Texte sind Props: in Remotion Studio rechts im Feld „Props“ änderbar
+// oder beim Rendern mit --props. clip: eigenes Video in public/ statt der Szene.
+export const kiTippSchema = z.object({
+  nr: z.number(),
+  clip: z.string().optional(),
+  label: z.string().optional(),
+  small: z.string().optional(),
+  big: z.string().optional(),
+  steps: z.array(z.string()).length(3).optional(),
+  fazit: z.string().optional(),
+  cta: z.string().optional(),
+});
+export type KiTippProps = z.infer<typeof kiTippSchema>;
 
-export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip }) => {
+export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip, ...texte }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const tipp = KI_TIPPS[nr - 1];
+  const tipp = { ...KI_TIPPS[nr - 1], ...texte };
 
   // Überschrift steht schon im ersten Frame (Vorschaubild), wippt nur leicht
   const headPulse = 1 + 0.02 * Math.sin(frame / 8);
@@ -66,7 +78,7 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip }) => {
             borderRadius: 999,
           }}
         >
-          KI-NEBENEINKOMMEN · TIPP {nr}/{KI_TIPPS.length}
+          {tipp.label ?? `KI-NEBENEINKOMMEN · TIPP ${nr}/${KI_TIPPS.length}`}
           <div style={{ position: "absolute", left: 0, bottom: 0, height: 6, width: `${progress * 100}%`, background: tipp.accent }} />
         </div>
       </div>

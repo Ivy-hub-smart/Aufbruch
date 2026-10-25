@@ -72,7 +72,7 @@ Acht Videos à 10 Sekunden. Ich laufe am See oder im Wind, dazu je ein KI-Tipp:
 
 | Nr | Tipp | Szene | Video |
 |---|---|---|---|
-| 1 | Digitale Produkte verkaufen | Morgen am See | `remotion/out/ki-tipp-1.mp4` |
+| 1 | Digitale Produkte verkaufen | Morgen am See, Karomantel am Steg | `remotion/out/ki-tipp-1.mp4` |
 | 2 | Social Media für lokale Firmen | Wind auf der Wiese | `remotion/out/ki-tipp-2.mp4` |
 | 3 | Kurzvideos ohne Stress | Abend am Steg | `remotion/out/ki-tipp-3.mp4` |
 | 4 | Prompt-Vorlagen verkaufen | Gegenwind am Ufer | `remotion/out/ki-tipp-4.mp4` |
@@ -89,7 +89,25 @@ Acht Videos à 10 Sekunden. Ich laufe am See oder im Wind, dazu je ein KI-Tipp:
 | Gegenwind am Ufer: Sturm und Wellen, dann bricht die Sonne durch | HyperFrames | `hyperframes/wind-ufer/index.html` |
 | Tipps, Karten, Fazit, @aufbruchsvision | Remotion | `remotion/src/KiTippVideo.tsx`, Texte in `remotion/src/kiTipps.ts` |
 
-Texte ändern: `remotion/src/kiTipps.ts` bearbeiten, dann `npm run render:ki-tipps`.
+### Texte selbst ändern
+
+Jeder Text ist änderbar: Etikett oben, Überschrift (`small`, `big`), die drei
+Schritte (`steps`), `fazit` und `cta`.
+
+1. **Dauerhaft:** in `remotion/src/kiTipps.ts` die Wörter zwischen den
+   Anführungszeichen ersetzen (geht auch direkt auf GitHub mit dem Stift-Symbol),
+   dann `npm run render:ki-tipps`.
+2. **Ausprobieren in Remotion Studio:** `cd remotion && npx remotion studio`,
+   Tipp links wählen, rechts unter „Props“ die Texte tippen, Vorschau sofort,
+   dann „Render“.
+3. **Einmalig beim Rendern:**
+
+```bash
+cd remotion
+npx remotion render KiTipp1 out/ki-tipp-1-neu.mp4 --props='{"nr":1,"big":"Mein Titel","steps":["Eins","Zwei","Drei"],"fazit":"Mein Fazit"}'
+```
+
+Nicht angegebene Texte bleiben wie in `kiTipps.ts`.
 
 ### Mit deinem eigenen Spaziergang-Video
 
