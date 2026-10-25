@@ -137,6 +137,10 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip }) => {
               lineHeight: 1.12,
               color: "white",
               textShadow: "0 6px 24px rgba(0,0,0,0.65)",
+              // dunkle Fläche, damit der Text auch vor der hellen Sonne lesbar bleibt
+              background: "rgba(10,20,40,0.45)",
+              padding: "24px 30px",
+              borderRadius: 36,
               opacity: fazitIn,
               transform: `scale(${0.5 + fazitIn * 0.5})`,
             }}

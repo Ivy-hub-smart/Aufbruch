@@ -116,4 +116,4 @@ npm run render                                        # erst HyperFrames, dann R
 ```
 
 Ohne Zugriff auf remotion.media kann Remotion einen vorhandenen Chrome nutzen:
-`REMOTION_BROWSER=/pfad/zu/headless_shell npm run render`
+`REMOTION_BROWSER=/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell npm run render`
