@@ -67,7 +67,7 @@ Fertiges Video: `remotion/out/zwilling.mp4`
 
 ## Serie „2. Einkommen mit KI“ (8 Videos)
 
-Acht Videos à 10 Sekunden. Ich laufe am See oder im Wind, dazu je ein KI-Tipp:
+Acht Videos à 10 Sekunden, alle in Grün. Ich laufe am See oder im Wind, dazu je ein KI-Tipp:
 Überschrift, drei Schritte als Karten, Fazit und „Speichern & folgen“.
 
 | Nr | Tipp | Szene | Video |

@@ -11,16 +11,14 @@ export type KiTipp = {
   cta: string;
 };
 
-const SEE = "linear-gradient(90deg, #0077b6 0%, #00b4d8 100%)";
-const ABEND = "linear-gradient(90deg, #e0115f 0%, #ff8c42 100%)";
+// Grün für die ganze Serie
 const WIESE = "linear-gradient(90deg, #2d8a34 0%, #8cc63f 100%)";
-const UFER = "linear-gradient(90deg, #3a0ca3 0%, #4895ef 100%)";
 
 export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp1",
     bg: "hyperframes-ki-1.mp4",
-    accent: SEE,
+    accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Digitale Produkte verkaufen",
     steps: [
@@ -49,7 +47,7 @@ export const KI_TIPPS: KiTipp[] = [
     id: "KiTipp3",
     bg: "",
     clip: { src: "spaziergang-pool.mp4", rate: 0.65 },
-    accent: ABEND,
+    accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Kurzvideos ohne Stress",
     steps: [
@@ -63,7 +61,7 @@ export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp4",
     bg: "hyperframes-ki-4.mp4",
-    accent: UFER,
+    accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Prompt-Vorlagen verkaufen",
     steps: [
@@ -77,7 +75,7 @@ export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp5",
     bg: "hyperframes-ki-5.mp4",
-    accent: SEE,
+    accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Affiliate mit KI-Content",
     steps: [
@@ -105,7 +103,7 @@ export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp7",
     bg: "hyperframes-ki-7.mp4",
-    accent: ABEND,
+    accent: WIESE,
     small: "2. Einkommen mit KI:",
     big: "Bring anderen KI bei",
     steps: [
@@ -119,7 +117,7 @@ export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp8",
     bg: "hyperframes-ki-8.mp4",
-    accent: UFER,
+    accent: WIESE,
     small: "Der wichtigste Tipp:",
     big: "Dranbleiben schlägt Talent",
     steps: [
