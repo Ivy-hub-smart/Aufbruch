@@ -115,13 +115,13 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, clip, ...texte }) => {
             key={step}
             style={{
               position: "absolute",
-              top: 560 + lower + i * 150,
+              top: 530 + lower + i * 138,
               left: 60,
               right: 60,
               display: "flex",
               alignItems: "center",
               gap: 26,
-              padding: "20px 30px",
+              padding: "16px 30px",
               background: "rgba(255,255,255,0.92)",
               borderRadius: 32,
               boxShadow: "0 12px 34px rgba(0,0,0,0.3)",
