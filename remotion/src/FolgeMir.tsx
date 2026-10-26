@@ -22,7 +22,7 @@ export const FOLGE_MIR: FolgeMirProps = {
     { text: "Dein 2. Einkommen.", mark: "Mit KI.", foto: "creme" },
     { text: "Ohne zu", mark: "kündigen.", foto: "blazer" },
     { text: "Ohne", mark: "Vorwissen.", foto: "creme" },
-    { text: "30 Minuten", mark: "am Tag.", foto: "hocke" },
+    { text: "10 Minuten", mark: "pro Tag.", foto: "hocke" },
     { text: "Ich zeige dir", mark: "jeden Schritt.", foto: "creme" },
     { text: "Ehrlich. Einfach.", mark: "Echt.", foto: "blazer" },
   ],

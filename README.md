@@ -118,7 +118,7 @@ Nicht angegebene Texte bleiben wie in `kiTipps.ts`.
 
 12 Sekunden, pro Bild eine kurze Aussage in grosser, fetter Schrift, alle 1,4 s
 ein Wechsel: „Ein Gehalt ist kein Plan B.“ → „Dein 2. Einkommen. Mit KI.“ →
-„Ohne zu kündigen.“ → „Ohne Vorwissen.“ → „30 Minuten am Tag.“ → „Ich zeige dir
+„Ohne zu kündigen.“ → „Ohne Vorwissen.“ → „10 Minuten pro Tag.“ → „Ich zeige dir
 jeden Schritt.“ → „Ehrlich. Einfach. Echt.“ → „Folge mir @aufbruchsvision“.
 Texte in `remotion/src/FolgeMir.tsx` (`FOLGE_MIR`), Video `remotion/out/folge-mir.mp4`.
 

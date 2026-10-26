@@ -111,7 +111,7 @@ export const KI_TIPPS: KiTipp[] = [
     small: "Der wichtigste Tipp",
     big: "Dranbleiben schlägt Talent",
     steps: [
-      "30 Minuten pro Tag – jeden Tag",
+      "10 Minuten pro Tag – jeden Tag",
       "Lieber eine Idee umsetzen als zehn planen",
       "Finger weg von „reich über Nacht“",
     ],
