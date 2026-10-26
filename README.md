@@ -65,33 +65,38 @@ bestimmen.“).
 
 Fertiges Video: `remotion/out/zwilling.mp4`
 
-## Serie „2. Einkommen mit KI“ (8 Videos)
+## Serie „2. Einkommen mit KI“ (8 Reels)
 
-Acht Videos à 10 Sekunden, alle in Grün. Ich laufe am See oder im Wind, dazu je ein KI-Tipp:
-Überschrift, drei Schritte als Karten, Fazit und „Speichern & folgen“.
+Acht Reels à 12 Sekunden im Stil des Karussells: Navy und Creme, Schreibschrift
+(Kaushan Script, Caveat), Logo-Wellen. Jedes Reel beginnt mit einer Hook, danach
+wechselt das Bild alle 1,6 Sekunden: Titel, drei Schritte, „Merke dir“, Aufruf.
+Es gibt nur zwei Fotos, abwechselnd: Hocke am Steg und schwarzer Blazer.
 
-| Nr | Tipp | Szene | Video |
+| Nr | Hook | Tipp | Video |
 |---|---|---|---|
-| 1 | Digitale Produkte verkaufen | Morgen am See, Karomantel am Steg | `remotion/out/ki-tipp-1.mp4` |
-| 2 | Social Media für lokale Firmen | Wind auf der Wiese | `remotion/out/ki-tipp-2.mp4` |
-| 3 | Kurzvideos ohne Stress | Abend am Steg | `remotion/out/ki-tipp-3.mp4` |
-| 4 | Prompt-Vorlagen verkaufen | Gegenwind am Ufer | `remotion/out/ki-tipp-4.mp4` |
-| 5 | Affiliate mit KI-Content | Morgen am See | `remotion/out/ki-tipp-5.mp4` |
-| 6 | Print-on-Demand mit KI-Designs | Wind auf der Wiese | `remotion/out/ki-tipp-6.mp4` |
-| 7 | Bring anderen KI bei | Abend am Steg | `remotion/out/ki-tipp-7.mp4` |
-| 8 | Dranbleiben schlägt Talent | Gegenwind am Ufer | `remotion/out/ki-tipp-8.mp4` |
+| 1 | Einmal erstellen. Immer wieder verkaufen. | Digitale Produkte | `remotion/out/ki-tipp-1.mp4` |
+| 2 | Jedes Café in deiner Stadt braucht das. | Social Media für lokale Firmen | `remotion/out/ki-tipp-2.mp4` |
+| 3 | Spazieren gehen und dabei Content machen? | Kurzvideos ohne Stress | `remotion/out/ki-tipp-3.mp4` |
+| 4 | Deine Prompts sind bares Geld wert. | Prompt-Vorlagen verkaufen | `remotion/out/ki-tipp-4.mp4` |
+| 5 | Empfehlen statt verkaufen – und trotzdem verdienen. | Affiliate mit KI-Content | `remotion/out/ki-tipp-5.mp4` |
+| 6 | Deine Idee auf 1000 Tassen – ohne Risiko. | Print-on-Demand | `remotion/out/ki-tipp-6.mp4` |
+| 7 | Was du heute über KI lernst, suchen andere morgen. | Bring anderen KI bei | `remotion/out/ki-tipp-7.mp4` |
+| 8 | Warum die meisten aufgeben – und du nicht. | Dranbleiben schlägt Talent | `remotion/out/ki-tipp-8.mp4` |
 
 | Teil | Tool | Datei |
 |---|---|---|
-| Morgen am See: Berge, Sonnenaufgang, Nebel, Schilf zieht vorbei | HyperFrames | `hyperframes/see-morgen/index.html` |
-| Abend am Steg: Sonnenuntergang, Segelboote, Sonnenpfad | HyperFrames | `hyperframes/see-abend/index.html` |
-| Wind auf der Wiese: Wolken jagen, Gras wogt, Blätter fliegen | HyperFrames | `hyperframes/wind-wiese/index.html` |
-| Gegenwind am Ufer: Sturm und Wellen, dann bricht die Sonne durch | HyperFrames | `hyperframes/wind-ufer/index.html` |
-| Tipps, Karten, Fazit, @aufbruchsvision | Remotion | `remotion/src/KiTippVideo.tsx`, Texte in `remotion/src/kiTipps.ts` |
+| Creme-Hintergrund: unscharfer See, Schleier, Logo-Wellen, Lichtpunkte | HyperFrames | `hyperframes/creme/index.html` |
+| Schnitte, Fotos, Hook, Schritte, Fazit, Aufruf, Logo | Remotion | `remotion/src/KiTippVideo.tsx`, Texte in `remotion/src/kiTipps.ts` |
+| Fotos | – | `remotion/public/foto-hocke.jpg`, `remotion/public/foto-blazer.png` |
+
+```bash
+npm run render:ki-szenen   # Creme-Hintergrund
+npm run render:ki-tipps    # alle 8 Reels
+```
 
 ### Texte selbst ändern
 
-Jeder Text ist änderbar: Etikett oben, Überschrift (`small`, `big`), die drei
+Jeder Text ist änderbar: `hook`, Etikett oben, Überschrift (`small`, `big`), die drei
 Schritte (`steps`), `fazit` und `cta`.
 
 1. **Dauerhaft:** in `remotion/src/kiTipps.ts` die Wörter zwischen den
@@ -108,18 +113,6 @@ npx remotion render KiTipp1 out/ki-tipp-1-neu.mp4 --props='{"nr":1,"big":"Mein T
 ```
 
 Nicht angegebene Texte bleiben wie in `kiTipps.ts`.
-
-### Mit deinem eigenen Spaziergang-Video
-
-Filme dich im Hochformat beim Laufen am See oder im Wind, lege das Video als
-`remotion/public/mein-spaziergang.mp4` ab und rendere einen Tipp darüber:
-
-```bash
-cd remotion
-npx remotion render KiTipp1 out/ki-tipp-1-echt.mp4 --props='{"nr":1,"clip":"mein-spaziergang.mp4"}'
-```
-
-Das Video sollte mindestens 10 Sekunden lang sein. Oben im Bild ist Platz für den Text.
 
 ## Eigenes Foto einsetzen
 

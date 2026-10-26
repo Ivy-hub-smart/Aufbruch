@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #fbf4ea; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      /* Karussell-Look: unscharfer See unter cremefarbenem Schleier */
+      #photo {
+        position: absolute; left: -120px; top: -120px; width: 1320px; height: 2160px;
+        background: url("assets/see-unscharf.jpg") center / cover no-repeat;
+        filter: blur(20px) saturate(1.1);
+      }
+      #veil { background: linear-gradient(180deg, rgba(255,252,246,.86) 0%, rgba(255,250,242,.78) 55%, rgba(255,248,238,.92) 100%); }
+      .wave { position: absolute; left: -200px; width: 2400px; height: 120px; }
+      .glow { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 22px 8px rgba(255,236,200,.8); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+      <div id="bg" class="clip layer" data-start="0" data-duration="12" data-track-index="0"></div>
+      <div id="veil" class="clip layer" data-start="0" data-duration="12" data-track-index="1"></div>
+      <div id="waves" class="clip layer" data-start="0" data-duration="12" data-track-index="2"></div>
+    </div>
+    <script>
+      let seed = 1111;
+      const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      document.getElementById("bg").innerHTML = '<div id="photo"></div>';
+
+      // die beiden Wellen aus dem aufbruchsvision-Logo, breit genug zum Gleiten
+      const wave = (color, width, opacity) => {
+        let d = "M0 60";
+        for (let x = 0; x < 2400; x += 300) d += ` C${x + 75} 10 ${x + 150} 10 ${x + 150} 60 C${x + 225} 110 ${x + 300} 110 ${x + 300} 60`;
+        return `<svg viewBox="0 0 2400 120" preserveAspectRatio="none"><path d="${d}" stroke="${color}" stroke-width="${width}" fill="none" stroke-linecap="round" opacity="${opacity}"/></svg>`;
+      };
+      const waves = document.getElementById("waves");
+      [[1500, "#1c3a5e", 6, 0.18], [1560, "#2b6aa8", 6, 0.16], [260, "#1c3a5e", 4, 0.1], [310, "#2b6aa8", 4, 0.09]].forEach(([y, c, w, o], i) => {
+        waves.insertAdjacentHTML("beforeend", `<div class="wave" id="w${i}" style="top:${y}px">${wave(c, w, o)}</div>`);
+      });
+      const glows = [];
+      for (let i = 0; i < 24; i++) {
+        const g = document.createElement("div");
+        g.className = "glow";
+        g.style.left = rand() * 1060 + "px";
+        g.style.top = rand() * 1880 + "px";
+        waves.appendChild(g);
+        glows.push(g);
+      }
+
+      const D = 12;
+      const tl = gsap.timeline({ paused: true });
+      // ruhiges Treiben: Foto gleitet, Wellen ziehen gegeneinander
+      tl.fromTo("#photo", { x: 0, y: 0, scale: 1 }, { x: -60, y: -40, scale: 1.08, duration: D, ease: "sine.inOut" }, 0);
+      tl.fromTo("#w0", { x: 0 }, { x: -300, duration: D, ease: "none" }, 0);
+      tl.fromTo("#w1", { x: -300 }, { x: 0, duration: D, ease: "none" }, 0);
+      tl.fromTo("#w2", { x: 0 }, { x: -300, duration: D, ease: "none" }, 0);
+      tl.fromTo("#w3", { x: -300 }, { x: 0, duration: D, ease: "none" }, 0);
+      glows.forEach((g, i) => {
+        tl.fromTo(g, { opacity: 0, y: 0 }, { opacity: 0.9, y: -40, duration: 1.2, yoyo: true, repeat: 1, ease: "sine.inOut" }, (i * 0.47) % 9.5);
+      });
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

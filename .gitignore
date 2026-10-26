@@ -2,6 +2,3 @@ node_modules/
 .hyperframes/
 .hyperframes-*.hf-transaction-*/
 remotion/public/work-*/
-# wird von hyperframes/scripts/render-ki-szenen.sh aus fotos/ kopiert
-hyperframes/see-*/assets/ich.png
-hyperframes/wind-*/assets/ich.png

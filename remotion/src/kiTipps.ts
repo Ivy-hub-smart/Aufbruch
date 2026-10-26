@@ -1,9 +1,8 @@
-// Serie „2. Einkommen mit KI“: ein Tipp pro Video, Hintergrund aus HyperFrames
+// Serie „2. Einkommen mit KI“ im Karussell-Stil (Navy/Creme), ein Tipp pro Reel.
+// Nur zwei Fotos: Hocke am Steg und schwarzer Blazer, abwechselnd.
 export type KiTipp = {
   id: string;
-  bg: string; // gerendertes HyperFrames-Video in public/
-  clip?: { src: string; rate: number }; // echtes Video statt Szene, verlangsamt auf 10 s
-  accent: string;
+  hook: string; // erste 2 Sekunden: muss neugierig machen
   small: string;
   big: string;
   steps: [string, string, string];
@@ -11,16 +10,12 @@ export type KiTipp = {
   cta: string;
 };
 
-// Grün für die ganze Serie
-const WIESE = "linear-gradient(90deg, #2d8a34 0%, #8cc63f 100%)";
-
 export const KI_TIPPS: KiTipp[] = [
   {
     id: "KiTipp1",
-    bg: "hyperframes-ki-1.mp4",
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
-    big: "Digitale Produkte verkaufen",
+    hook: "Einmal erstellen. Immer wieder verkaufen.",
+    small: "2. Einkommen mit KI",
+    big: "Digitale Produkte",
     steps: [
       "KI schreibt den Inhalt: Planer, Checklisten, E-Books",
       "Canva macht es schön – in einer Stunde",
@@ -31,9 +26,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp2",
-    bg: "hyperframes-ki-2.mp4",
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
+    hook: "Jedes Café in deiner Stadt braucht das.",
+    small: "2. Einkommen mit KI",
     big: "Social Media für lokale Firmen",
     steps: [
       "Coiffeur, Café, Physio: Alle brauchen Posts",
@@ -45,10 +39,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp3",
-    bg: "",
-    clip: { src: "spaziergang-pool.mp4", rate: 0.65 },
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
+    hook: "Spazieren gehen und dabei Content machen?",
+    small: "2. Einkommen mit KI",
     big: "Kurzvideos ohne Stress",
     steps: [
       "KI liefert Ideen, Skript und Untertitel",
@@ -60,9 +52,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp4",
-    bg: "hyperframes-ki-4.mp4",
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
+    hook: "Deine Prompts sind bares Geld wert.",
+    small: "2. Einkommen mit KI",
     big: "Prompt-Vorlagen verkaufen",
     steps: [
       "Deine besten Prompts sammeln und testen",
@@ -74,9 +65,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp5",
-    bg: "hyperframes-ki-5.mp4",
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
+    hook: "Empfehlen statt verkaufen – und trotzdem verdienen.",
+    small: "2. Einkommen mit KI",
     big: "Affiliate mit KI-Content",
     steps: [
       "Nur empfehlen, was du selbst nutzt",
@@ -88,9 +78,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp6",
-    bg: "hyperframes-ki-6.mp4",
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
+    hook: "Deine Idee auf 1000 Tassen – ohne Risiko.",
+    small: "2. Einkommen mit KI",
     big: "Print-on-Demand mit KI-Designs",
     steps: [
       "Deine Idee + KI-Bild = eigenes Design",
@@ -102,9 +91,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp7",
-    bg: "hyperframes-ki-7.mp4",
-    accent: WIESE,
-    small: "2. Einkommen mit KI:",
+    hook: "Was du heute über KI lernst, suchen andere morgen.",
+    small: "2. Einkommen mit KI",
     big: "Bring anderen KI bei",
     steps: [
       "Was du heute lernst, suchen andere morgen",
@@ -116,9 +104,8 @@ export const KI_TIPPS: KiTipp[] = [
   },
   {
     id: "KiTipp8",
-    bg: "hyperframes-ki-8.mp4",
-    accent: WIESE,
-    small: "Der wichtigste Tipp:",
+    hook: "Warum die meisten aufgeben – und du nicht.",
+    small: "Der wichtigste Tipp",
     big: "Dranbleiben schlägt Talent",
     steps: [
       "30 Minuten pro Tag – jeden Tag",
