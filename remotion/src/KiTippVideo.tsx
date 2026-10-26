@@ -3,6 +3,7 @@ import "@fontsource/montserrat/700.css";
 import "@fontsource/montserrat/900.css";
 import {
   AbsoluteFill,
+  Audio,
   Img,
   OffthreadVideo,
   Sequence,
@@ -22,8 +23,9 @@ const CREAM = "#f3e3c8";
 const INK = "#22324a";
 const SANS = "Montserrat, sans-serif";
 
-// alle 48 Frames (1,6 s) ein Wechsel, Hook etwas länger
-const CUTS = [0, 66, 114, 162, 210, 258, 306, 360];
+// alle 48 Frames (1,6 s = 3 Schläge bei 112,5 BPM) ein Wechsel, Hook 4 Schläge;
+// muss zu CUTS in scripts/ki-beat.py passen
+const CUTS = [0, 64, 112, 160, 208, 256, 304, 360];
 
 // Alle Texte sind Props: in Remotion Studio rechts unter „Props“ änderbar
 // oder beim Rendern mit --props.
@@ -175,6 +177,8 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, ...texte }) => {
 
   return (
     <AbsoluteFill style={{ background: "#fbf4ea", fontFamily: SANS }}>
+      {/* eigener Ukulele-Beat (scripts/ki-beat.py), lizenzfrei */}
+      <Audio src={staticFile("ki-beat.wav")} />
       {/* Hook: steht schon im ersten Frame (Vorschaubild) */}
       <Sequence {...seg(0)}>
         <Foto foto={a} focus="70% 60%">

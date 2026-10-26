@@ -1,6 +1,6 @@
 import "@fontsource/montserrat/400.css";
 import "@fontsource/montserrat/900.css";
-import { AbsoluteFill, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { z } from "zod";
 import { Brush, Creme, Logo } from "./KiTippVideo";
 
@@ -28,8 +28,8 @@ export const FOLGE_MIR: FolgeMirProps = {
   claim: "Folge mir",
 };
 
-const SZENE = 42; // 1,4 s pro Bild
-const CTA = 66;
+const SZENE = 40; // 2 Schläge bei 90 BPM, passend zu scripts/ki-beat.py
+const CTA = 80;
 
 const Hintergrund: React.FC<{ foto: "hocke" | "blazer" | "creme" }> = ({ foto }) => {
   const frame = useCurrentFrame();
@@ -109,6 +109,8 @@ export const FolgeMir: React.FC<FolgeMirProps> = ({ szenen, handle, claim }) => 
 
   return (
     <AbsoluteFill style={{ background: "#fbf4ea" }}>
+      {/* eigener Beat mit Klavier (scripts/ki-beat.py), lizenzfrei */}
+      <Audio src={staticFile("folge-mir-beat.wav")} />
       {szenen.map((s, i) => (
         <Sequence key={i} from={i * SZENE} durationInFrames={SZENE}>
           <Hintergrund foto={s.foto} />

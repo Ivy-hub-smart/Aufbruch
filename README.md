@@ -68,7 +68,9 @@ Fertiges Video: `remotion/out/zwilling.mp4`
 ## Serie „2. Einkommen mit KI“ (8 Reels)
 
 Acht Reels à 12 Sekunden im Stil des Karussells: Navy und Creme, Logo-Wellen,
-überall die gut lesbare fette Schrift (Montserrat). Jedes Reel beginnt mit einer Hook, danach
+überall die gut lesbare fette Schrift (Montserrat). Musik: eigener Ukulele-Beat
+mit 112,5 BPM (`remotion/scripts/ki-beat.py`, lizenzfrei), jeder Bildwechsel fällt
+auf den Takt und bekommt einen Glocken-Ton. Jedes Reel beginnt mit einer Hook, danach
 wechselt das Bild alle 1,6 Sekunden: Titel, drei Schritte, „Merke dir“, Aufruf.
 Es gibt nur zwei Fotos, abwechselnd: Hocke am Steg und schwarzer Blazer.
 
@@ -116,10 +118,11 @@ Nicht angegebene Texte bleiben wie in `kiTipps.ts`.
 
 ## Reel „Folge mir“
 
-12 Sekunden, pro Bild eine kurze Aussage in grosser, fetter Schrift, alle 1,4 s
+12 Sekunden, pro Bild eine kurze Aussage in grosser, fetter Schrift, alle 1,3 s
 ein Wechsel: „Ein Gehalt ist kein Plan B.“ → „Dein 2. Einkommen. Mit KI.“ →
 „Ohne zu kündigen.“ → „Ohne Vorwissen.“ → „10 Minuten pro Tag.“ → „Ich zeige dir
 jeden Schritt.“ → „Ehrlich. Einfach. Echt.“ → „Folge mir @aufbruchsvision“.
+Musik: eigener Beat mit Klavier und Ukulele, 90 BPM, ein Wechsel alle 2 Schläge.
 Texte in `remotion/src/FolgeMir.tsx` (`FOLGE_MIR`), Video `remotion/out/folge-mir.mp4`.
 
 ## Eigenes Foto einsetzen
