@@ -62,7 +62,7 @@ def piano(freq, dur=2.5):
 
 def glock(freq):
     t = np.arange(int(SR * 1.2)) / SR
-    return (np.sin(2 * np.pi * freq * t) + 0.4 * np.sin(2 * np.pi * freq * 2.76 * t)) * np.exp(-t * 4) * 0.22
+    return (np.sin(2 * np.pi * freq * t) + 0.4 * np.sin(2 * np.pi * freq * 2.76 * t)) * np.exp(-t * 4) * 0.4
 
 
 def kick():
@@ -103,7 +103,7 @@ for bar in range(bars):
         for eighth, down in [(0, True), (2, True), (3, False), (5, False), (6, True), (7, False)]:
             notes = chord if down else chord[::-1]
             for k, note in enumerate(notes):
-                add(pluck(hz(note), bright=0.55 if down else 0.4), t0 + eighth * beat / 2 + k * 0.012, pan=-0.25, gain=0.34 if down else 0.22)
+                add(pluck(hz(note), bright=0.55 if down else 0.4), t0 + eighth * beat / 2 + k * 0.012, pan=-0.25, gain=0.5 if down else 0.32)
     else:
         for k, note in enumerate(chord):
             add(piano(hz(note)), t0 + k * 0.02, gain=0.9)
@@ -135,6 +135,10 @@ fl = int(0.6 * SR)
 fade[-fl:] = np.linspace(1, 0, fl) ** 2
 mix = np.stack([L * fade, R * fade], axis=1)
 mix = mix / np.max(np.abs(mix)) * 0.85
+pcm = (mix * 32767).astype(np.int16)
+
+# lauter für Handy-Lautsprecher: sanft begrenzen statt nur normalisieren
+mix = np.tanh(mix * 2.2) / np.tanh(2.2) * 0.95
 pcm = (mix * 32767).astype(np.int16)
 
 with wave.open(sys.argv[2], "wb") as w:
