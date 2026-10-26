@@ -1,7 +1,6 @@
 import "@fontsource/montserrat/400.css";
 import "@fontsource/montserrat/700.css";
-import "@fontsource/kaushan-script/400.css";
-import "@fontsource/caveat/700.css";
+import "@fontsource/montserrat/900.css";
 import {
   AbsoluteFill,
   Img,
@@ -16,13 +15,11 @@ import {
 import { z } from "zod";
 import { KI_TIPPS, SERIE } from "./kiTipps";
 
-// Karussell-Farben, in jedem Reel gleich
+// Karussell-Farben, in jedem Reel gleich; Schrift überall fett und gut lesbar
 const NAVY = "#1c3a5e";
 const BLUE = "#2b5687";
 const CREAM = "#f3e3c8";
 const INK = "#22324a";
-const SCRIPT = "'Kaushan Script', cursive";
-const HAND = "Caveat, cursive";
 const SANS = "Montserrat, sans-serif";
 
 // alle 48 Frames (1,6 s) ein Wechsel, Hook etwas länger
@@ -147,8 +144,8 @@ const Badge: React.FC<{ text: string }> = ({ text }) => (
 const StepOnPhoto: React.FC<{ n: number; text: string }> = ({ n, text }) => (
   <Panel>
     <div style={{ display: "flex", alignItems: "flex-start", gap: 30 }}>
-      <div style={{ fontFamily: SCRIPT, fontSize: 150, lineHeight: 0.85, color: NAVY }}>{n}</div>
-      <div style={{ fontFamily: SCRIPT, fontSize: 64, lineHeight: 1.15, color: NAVY }}>{text}</div>
+      <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 130, lineHeight: 0.85, color: NAVY }}>{n}</div>
+      <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 58, lineHeight: 1.18, color: NAVY }}>{text}</div>
     </div>
   </Panel>
 );
@@ -158,8 +155,8 @@ const StepOnCreme: React.FC<{ n: number; text: string }> = ({ n, text }) => {
   return (
     <Creme>
       <div style={{ position: "absolute", top: 520, left: 90, right: 90, textAlign: "center", opacity: p, transform: `translateX(${(1 - p) * 160}px)` }}>
-        <div style={{ fontFamily: SCRIPT, fontSize: 300, lineHeight: 0.9, color: NAVY, transform: `scale(${0.6 + p * 0.4})` }}>{n}</div>
-        <div style={{ fontFamily: SCRIPT, fontSize: 84, lineHeight: 1.15, color: NAVY, marginTop: 40 }}>{text}</div>
+        <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 260, lineHeight: 0.9, color: NAVY, transform: `scale(${0.6 + p * 0.4})` }}>{n}</div>
+        <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 72, lineHeight: 1.15, color: NAVY, marginTop: 40 }}>{text}</div>
       </div>
       <Logo />
     </Creme>
@@ -194,7 +191,7 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, ...texte }) => {
               boxShadow: "0 18px 50px rgba(28,58,94,0.25)",
             }}
           >
-            <div style={{ fontFamily: SCRIPT, fontSize: 92, lineHeight: 1.12, color: NAVY, textAlign: "center" }}>{tipp.hook}</div>
+            <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 78, lineHeight: 1.12, color: NAVY, textAlign: "center" }}>{tipp.hook}</div>
           </div>
         </Foto>
       </Sequence>
@@ -244,8 +241,8 @@ const TitleScene: React.FC<{ label: string; small: string; big: string }> = ({ s
         <div style={{ fontFamily: SANS, fontSize: 46, letterSpacing: 6, textTransform: "uppercase", color: BLUE, opacity: p }}>{small}</div>
         <div
           style={{
-            fontFamily: SCRIPT,
-            fontSize: 138,
+            fontFamily: SANS, fontWeight: 900,
+            fontSize: 108,
             lineHeight: 1.08,
             color: NAVY,
             marginTop: 30,
@@ -272,9 +269,9 @@ const FazitScene: React.FC<{ fazit: string }> = ({ fazit }) => {
             position: "relative",
             isolation: "isolate",
             padding: "18px 60px",
-            fontFamily: HAND,
-            fontWeight: 700,
-            fontSize: 74,
+            fontFamily: SANS,
+            fontWeight: 900,
+            fontSize: 60,
             color: INK,
             transform: `rotate(-3deg) scale(${p})`,
           }}
@@ -282,7 +279,7 @@ const FazitScene: React.FC<{ fazit: string }> = ({ fazit }) => {
           <Brush fill={CREAM} />
           Merke dir:
         </div>
-        <div style={{ fontFamily: SCRIPT, fontSize: 104, lineHeight: 1.12, color: NAVY, marginTop: 50, opacity: q, transform: `translateY(${(1 - q) * 60}px)` }}>
+        <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 86, lineHeight: 1.12, color: NAVY, marginTop: 50, opacity: q, transform: `translateY(${(1 - q) * 60}px)` }}>
           {fazit}
         </div>
       </div>
@@ -297,7 +294,7 @@ const CtaScene: React.FC<{ cta: string }> = ({ cta }) => {
   return (
     <Creme>
       <div style={{ position: "absolute", top: 420, left: 70, right: 70, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 50 }}>
-        <div style={{ fontFamily: SCRIPT, fontSize: 104, lineHeight: 1.12, color: NAVY, opacity: p, transform: `scale(${0.8 + p * 0.2})` }}>{cta}</div>
+        <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 84, lineHeight: 1.12, color: NAVY, opacity: p, transform: `scale(${0.8 + p * 0.2})` }}>{cta}</div>
         <div
           style={{
             position: "relative",

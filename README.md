@@ -67,8 +67,8 @@ Fertiges Video: `remotion/out/zwilling.mp4`
 
 ## Serie „2. Einkommen mit KI“ (8 Reels)
 
-Acht Reels à 12 Sekunden im Stil des Karussells: Navy und Creme, Schreibschrift
-(Kaushan Script, Caveat), Logo-Wellen. Jedes Reel beginnt mit einer Hook, danach
+Acht Reels à 12 Sekunden im Stil des Karussells: Navy und Creme, Logo-Wellen,
+überall die gut lesbare fette Schrift (Montserrat). Jedes Reel beginnt mit einer Hook, danach
 wechselt das Bild alle 1,6 Sekunden: Titel, drei Schritte, „Merke dir“, Aufruf.
 Es gibt nur zwei Fotos, abwechselnd: Hocke am Steg und schwarzer Blazer.
 

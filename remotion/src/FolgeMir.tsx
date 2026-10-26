@@ -1,6 +1,5 @@
 import "@fontsource/montserrat/400.css";
 import "@fontsource/montserrat/900.css";
-import "@fontsource/kaushan-script/400.css";
 import { AbsoluteFill, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { z } from "zod";
 import { Brush, Creme, Logo } from "./KiTippVideo";
@@ -8,7 +7,6 @@ import { Brush, Creme, Logo } from "./KiTippVideo";
 const NAVY = "#1c3a5e";
 const BLUE = "#2b5687";
 const SANS = "Montserrat, sans-serif";
-const SCRIPT = "'Kaushan Script', cursive";
 
 // Folge-mir-Reel: pro Bild eine kurze Aussage in grosser, fetter Schrift.
 // mark = Wort, das auf dem blauen Pinselstrich steht.
@@ -121,7 +119,7 @@ export const FolgeMir: React.FC<FolgeMirProps> = ({ szenen, handle, claim }) => 
       <Sequence from={ctaFrom} durationInFrames={CTA}>
         <Creme>
           <div style={{ position: "absolute", top: 520, left: 50, right: 50, display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
-            <div style={{ fontFamily: SCRIPT, fontSize: 170, color: NAVY, transform: `scale(${c})` }}>{claim}</div>
+            <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 140, color: NAVY, transform: `scale(${c})` }}>{claim}</div>
             <div
               style={{
                 position: "relative",
