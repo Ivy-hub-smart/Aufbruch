@@ -2,6 +2,7 @@
 // Nur zwei Fotos: Hocke am Steg und schwarzer Blazer, abwechselnd.
 export type KiTipp = {
   id: string;
+  label?: string; // Etikett oben rechts, sonst „Tipp n/8“
   hook: string; // erste 2 Sekunden: muss neugierig machen
   small: string;
   big: string;
@@ -9,6 +10,8 @@ export type KiTipp = {
   fazit: string;
   cta: string;
 };
+
+export const SERIE = 8; // Tipps der Serie, der Bonus zählt nicht mit
 
 export const KI_TIPPS: KiTipp[] = [
   {
@@ -114,5 +117,19 @@ export const KI_TIPPS: KiTipp[] = [
     ],
     fazit: "Gegenwind macht dich stärker.",
     cta: "Folge mir für mehr KI-Tipps!",
+  },
+  {
+    id: "KiTipp9",
+    label: "Bonus-Tipp",
+    hook: "Schreib das nie in Claude …",
+    small: "Prompt-Tipp",
+    big: "Sag der KI, was du wirklich willst",
+    steps: [
+      "Nicht: „Erstelle mir ein Video.“",
+      "Sondern: „Erstelle ein Top-Video mit Hook, damit mir alle folgen wollen.“",
+      "Ziel + Wirkung + Publikum = viel bessere Ergebnisse",
+    ],
+    fazit: "Je klarer dein Wunsch, desto besser die KI.",
+    cta: "Speichern & folgen für mehr KI-Tipps!",
   },
 ];

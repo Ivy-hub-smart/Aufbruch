@@ -65,7 +65,7 @@ bestimmen.“).
 
 Fertiges Video: `remotion/out/zwilling.mp4`
 
-## Serie „2. Einkommen mit KI“ (8 Reels)
+## Serie „2. Einkommen mit KI“ (8 Reels + Bonus)
 
 Acht Reels à 12 Sekunden im Stil des Karussells: Navy und Creme, Schreibschrift
 (Kaushan Script, Caveat), Logo-Wellen. Jedes Reel beginnt mit einer Hook, danach
@@ -82,6 +82,7 @@ Es gibt nur zwei Fotos, abwechselnd: Hocke am Steg und schwarzer Blazer.
 | 6 | Deine Idee auf 1000 Tassen – ohne Risiko. | Print-on-Demand | `remotion/out/ki-tipp-6.mp4` |
 | 7 | Was du heute über KI lernst, suchen andere morgen. | Bring anderen KI bei | `remotion/out/ki-tipp-7.mp4` |
 | 8 | Warum die meisten aufgeben – und du nicht. | Dranbleiben schlägt Talent | `remotion/out/ki-tipp-8.mp4` |
+| Bonus | Schreib das nie in Claude … | Prompt-Tipp: „Erstelle ein Top-Video mit Hook, damit mir alle folgen wollen.“ | `remotion/out/ki-tipp-9.mp4` |
 
 | Teil | Tool | Datei |
 |---|---|---|

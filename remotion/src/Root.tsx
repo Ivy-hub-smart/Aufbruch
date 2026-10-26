@@ -5,7 +5,7 @@ import { TanzVideo } from "./TanzVideo";
 import { ZweifelTraum } from "./ZweifelTraum";
 import { Zwilling } from "./Zwilling";
 import { KiTippVideo, kiTippSchema } from "./KiTippVideo";
-import { KI_TIPPS } from "./kiTipps";
+import { KI_TIPPS, SERIE } from "./kiTipps";
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -59,7 +59,7 @@ export const RemotionRoot: React.FC = () => (
       fps={30}
       width={1080}
       height={1920}
-      defaultProps={{ nr: i + 1, label: `Tipp ${i + 1}/${KI_TIPPS.length}`, hook: tipp.hook, small: tipp.small, big: tipp.big, steps: tipp.steps, fazit: tipp.fazit, cta: tipp.cta }}
+      defaultProps={{ nr: i + 1, label: tipp.label ?? `Tipp ${i + 1}/${SERIE}`, hook: tipp.hook, small: tipp.small, big: tipp.big, steps: tipp.steps, fazit: tipp.fazit, cta: tipp.cta }}
     />
   ))}
   </>

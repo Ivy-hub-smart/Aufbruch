@@ -14,7 +14,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { z } from "zod";
-import { KI_TIPPS } from "./kiTipps";
+import { KI_TIPPS, SERIE } from "./kiTipps";
 
 // Karussell-Farben, in jedem Reel gleich
 const NAVY = "#1c3a5e";
@@ -170,7 +170,7 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, ...texte }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const tipp = { ...KI_TIPPS[nr - 1], ...texte };
-  const label = tipp.label ?? `Tipp ${nr}/${KI_TIPPS.length}`;
+  const label = tipp.label ?? `Tipp ${nr}/${SERIE}`;
   // die beiden Fotos wechseln sich ab, jedes Reel beginnt mit einem anderen
   const a = nr % 2 === 1 ? "hocke" : "blazer";
   const b = a === "hocke" ? "blazer" : "hocke";
