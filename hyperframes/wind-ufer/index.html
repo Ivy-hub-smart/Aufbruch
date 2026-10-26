@@ -156,11 +156,8 @@
       tl.fromTo("#sun", { scale: 0.6 }, { scale: 1, duration: 1.2, ease: "back.out(1.6)" }, TURN);
       tl.fromTo("#me", { filter: "grayscale(0.7) brightness(0.8)" }, { filter: "grayscale(0) brightness(1.05) drop-shadow(0 0 40px rgba(255,230,160,0.8))", duration: 0.6 }, TURN);
 
-      // gegen den Wind laufen, danach aufrecht und leichter
-      tl.fromTo("#me", { y: 0 }, { y: -16, duration: 0.25, yoyo: true, repeat: 39, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { rotation: 2.5 }, { rotation: 4.5, duration: 0.5, yoyo: true, repeat: 9, ease: "sine.inOut" }, 0);
-      tl.to("#me", { rotation: 0, duration: 0.6, ease: "power2.out" }, TURN);
-      tl.fromTo("#me", { scale: 1 }, { scale: 1.06, duration: D, ease: "none" }, 0);
+      // ich stehe ruhig, nur die Kamera fährt langsam heran
+      tl.fromTo("#me", { scale: 1 }, { scale: 1.06, duration: D, ease: "sine.inOut" }, 0);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;

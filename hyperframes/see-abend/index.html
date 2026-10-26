@@ -35,7 +35,7 @@
         position: absolute; left: 50%; bottom: -30px; width: 900px; height: 980px; margin-left: -450px;
         background: url("assets/ich.png") center bottom / contain no-repeat;
         transform-origin: 50% 100%;
-        filter: sepia(0.25) saturate(1.2) drop-shadow(0 0 40px rgba(255,170,90,0.75));
+        filter: sepia(0.25) saturate(1.2) drop-shadow(0 0 30px rgba(255,170,90,0.4));
       }
       #warm { background: linear-gradient(180deg, rgba(255,140,60,0) 40%, rgba(255,120,60,0.25) 100%); mix-blend-mode: soft-light; }
       .spark { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #fff3c0; box-shadow: 0 0 16px 5px rgba(255,220,140,0.85); opacity: 0; }
@@ -122,10 +122,8 @@
         tl.fromTo(s, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1.2, duration: 0.3, yoyo: true, repeat: 1, ease: "sine.inOut" }, (i * 0.27) % 9.3);
       });
 
-      // Schritte
-      tl.fromTo("#me", { y: 0 }, { y: -14, duration: 0.28, yoyo: true, repeat: 35, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { rotation: 1 }, { rotation: -1, duration: 0.56, yoyo: true, repeat: 17, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { scale: 1.04 }, { scale: 1, duration: D, ease: "none" }, 0);
+      // ich stehe ruhig, nur die Kamera fährt langsam heran
+      tl.fromTo("#me", { scale: 1.04 }, { scale: 1, duration: D, ease: "sine.inOut" }, 0);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;

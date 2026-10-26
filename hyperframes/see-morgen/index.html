@@ -44,7 +44,7 @@
         position: absolute; left: 50%; bottom: -30px; width: 900px; height: 980px; margin-left: -450px;
         background: url("assets/ich.png") center bottom / contain no-repeat;
         transform-origin: 50% 100%;
-        filter: drop-shadow(0 0 40px rgba(255,236,200,0.7));
+        filter: drop-shadow(0 0 30px rgba(255,236,200,0.35));
       }
       #light {
         background: radial-gradient(circle at 70% 55%, rgba(255,240,200,0.45), transparent 55%);
@@ -129,10 +129,8 @@
         tl.fromTo(g, { opacity: 0 }, { opacity: 0.95, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, (i * 0.37) % 9.2);
       });
 
-      // Schritte: leichtes Wippen und Pendeln, 2 Schritte pro Sekunde
-      tl.fromTo("#me", { y: 0 }, { y: -16, duration: 0.25, yoyo: true, repeat: 39, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { rotation: -1.2 }, { rotation: 1.2, duration: 0.5, yoyo: true, repeat: 19, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { scale: 1 }, { scale: 1.05, duration: D, ease: "none" }, 0);
+      // ich stehe ruhig, nur die Kamera fährt langsam heran
+      tl.fromTo("#me", { scale: 1 }, { scale: 1.05, duration: D, ease: "sine.inOut" }, 0);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;

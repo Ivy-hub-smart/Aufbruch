@@ -136,10 +136,8 @@
           { x: -1350, y: -200 + rand() * 400, rotation: -720 + rand() * 360, duration: 1.4 + rand() * 0.8, ease: "sine.inOut" }, t);
       });
 
-      // Ich laufe gegen den Wind: Wippen, leicht nach vorn gelehnt
-      tl.fromTo("#me", { y: 0 }, { y: -18, duration: 0.25, yoyo: true, repeat: 39, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { rotation: 1.5 }, { rotation: 3.2, duration: 0.5, yoyo: true, repeat: 19, ease: "sine.inOut" }, 0);
-      tl.fromTo("#me", { scale: 1 }, { scale: 1.05, duration: D, ease: "none" }, 0);
+      // ich stehe ruhig, nur die Kamera fährt langsam heran
+      tl.fromTo("#me", { scale: 1 }, { scale: 1.05, duration: D, ease: "sine.inOut" }, 0);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;
