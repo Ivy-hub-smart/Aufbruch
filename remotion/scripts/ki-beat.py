@@ -2,6 +2,7 @@
 
 python3 ki-beat.py tipps  public/ki-beat.wav       # 112,5 BPM, Wechsel alle 3 Schläge
 python3 ki-beat.py folge  public/folge-mir-beat.wav  # 90 BPM, wärmer, mit Klavier
+python3 ki-beat.py tipps  public/ki-beat-32.wav 32  # beliebige Länge, unter Voice-over, ohne Glocken
 Jeder Bildwechsel fällt auf einen Schlag und bekommt einen hellen Glocken-Ton.
 """
 import sys
@@ -22,6 +23,11 @@ if MODE == "tipps":
 else:
     BPM = 90.0  # 1 Schlag = 20 Frames
     CUTS = [40 * i for i in range(1, 8)]  # wie SZENE in FolgeMir.tsx
+# mit Länge als 3. Argument: Bett unter einem Voice-over, Schnitte folgen der Stimme
+if len(sys.argv) > 3:
+    DUR = float(sys.argv[3])
+    n = int(SR * DUR)
+    CUTS = []
 beat = 60 / BPM
 
 L = np.zeros(n)

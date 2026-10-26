@@ -56,7 +56,7 @@ export const RemotionRoot: React.FC = () => (
       id={tipp.id}
       component={KiTippVideo}
       schema={kiTippSchema}
-      durationInFrames={360} // 12 Sekunden bei 30 fps
+      durationInFrames={tipp.voice ? Math.round(tipp.voice.cuts[6] * 30) : 360} // 12 s, mit Stimme so lang wie sie
       fps={30}
       width={1080}
       height={1920}

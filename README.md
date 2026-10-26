@@ -96,6 +96,18 @@ npm run render:ki-szenen   # Creme-Hintergrund
 npm run render:ki-tipps    # alle 8 Reels
 ```
 
+### Mit eigener Stimme (Voice-over)
+
+Aufnahme in `remotion/public/voice-tipp-N.wav` (aufbereitet mit
+`ffmpeg -af "highpass=f=80,afftdn=nf=-30,acompressor=threshold=-20dB:ratio=3,loudnorm=I=-14"`),
+dazu in `kiTipps.ts` beim Tipp `voice: { src, cuts }` mit den Satzanfängen in Sekunden.
+Die Bilder wechseln dann mit den Sätzen, lange Sätze bekommen zwei Bilder, die Musik
+(`ki-beat-32.wav`) läuft leise darunter.
+
+```bash
+cd remotion && npx remotion render KiTipp1 out/ki-tipp-1-voice.mp4
+```
+
 ### Texte selbst ändern
 
 Jeder Text ist änderbar: `hook`, Etikett oben, Überschrift (`small`, `big`), die drei

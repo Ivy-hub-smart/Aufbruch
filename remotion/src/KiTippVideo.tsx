@@ -167,71 +167,90 @@ const StepOnCreme: React.FC<{ n: number; text: string }> = ({ n, text }) => {
 
 export const KiTippVideo: React.FC<KiTippProps> = ({ nr, ...texte }) => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, fps } = useVideoConfig();
   const tipp = { ...KI_TIPPS[nr - 1], ...texte };
   const label = tipp.label ?? `Tipp ${nr}/${SERIE}`;
   // die beiden Fotos wechseln sich ab, jedes Reel beginnt mit einem anderen
   const a = nr % 2 === 1 ? "hocke" : "blazer";
   const b = a === "hocke" ? "blazer" : "hocke";
-  const seg = (i: number) => ({ from: CUTS[i], durationInFrames: CUTS[i + 1] - CUTS[i] });
+
+  const hook = (foto: "hocke" | "blazer") => (
+    <Foto foto={foto} focus="70% 60%">
+      <div
+        style={{
+          position: "absolute",
+          top: 200,
+          left: 60,
+          right: 60,
+          padding: "44px 50px",
+          background: "rgba(251,244,234,0.94)",
+          borderRadius: 40,
+          transform: `rotate(-2deg) scale(${1 + 0.015 * Math.sin(frame / 6)})`,
+          boxShadow: "0 18px 50px rgba(28,58,94,0.25)",
+        }}
+      >
+        <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 78, lineHeight: 1.12, color: NAVY, textAlign: "center" }}>{tipp.hook}</div>
+      </div>
+    </Foto>
+  );
+  const title = <TitleScene label={label} small={tipp.small} big={tipp.big} />;
+  const stepFoto = (i: number, foto: "hocke" | "blazer") => (
+    <Foto foto={foto} focus={["50% 30%", "40% 50%", "30% 80%"][i]}>
+      <StepOnPhoto n={i + 1} text={tipp.steps[i]} />
+    </Foto>
+  );
+  const stepCreme = (i: number) => <StepOnCreme n={i + 1} text={tipp.steps[i]} />;
+  const fazit = <FazitScene fazit={tipp.fazit} />;
+  const cta = <CtaScene cta={tipp.cta} />;
+
+  // Szenen: ohne Stimme fester Takt, mit Stimme folgen die Schnitte den Sätzen
+  // und lange Sätze bekommen zwei Bilder, damit es nie stillsteht
+  let shots: { from: number; to: number; el: React.ReactNode }[];
+  if (tipp.voice) {
+    const c = [0, ...tipp.voice.cuts].map((sec) => Math.round(sec * fps));
+    const half = (i: number) => Math.round((c[i] + c[i + 1]) / 2);
+    shots = [
+      { from: c[0], to: half(0), el: hook(a) },
+      { from: half(0), to: c[1], el: hook(b) },
+      { from: c[1], to: c[2], el: title },
+      { from: c[2], to: half(2), el: stepFoto(0, b) },
+      { from: half(2), to: c[3], el: stepCreme(0) },
+      { from: c[3], to: half(3), el: stepCreme(1) },
+      { from: half(3), to: c[4], el: stepFoto(1, a) },
+      { from: c[4], to: half(4), el: stepFoto(2, b) },
+      { from: half(4), to: c[5], el: stepCreme(2) },
+      { from: c[5], to: c[6], el: fazit },
+      { from: c[6], to: c[7], el: cta },
+    ];
+  } else {
+    const els = [hook(a), title, stepFoto(0, b), stepCreme(1), stepFoto(2, a), fazit, cta];
+    shots = els.map((el, i) => ({ from: CUTS[i], to: CUTS[i + 1], el }));
+  }
+  const titleFrom = shots.find((s) => s.el === title)!.from;
+  const ctaFrom = shots[shots.length - 1].from;
 
   return (
     <AbsoluteFill style={{ background: "#fbf4ea", fontFamily: SANS }}>
-      {/* eigener Ukulele-Beat (scripts/ki-beat.py), lizenzfrei */}
-      <Audio src={staticFile("ki-beat.wav")} />
-      {/* Hook: steht schon im ersten Frame (Vorschaubild) */}
-      <Sequence {...seg(0)}>
-        <Foto foto={a} focus="70% 60%">
-          <div
-            style={{
-              position: "absolute",
-              top: 200,
-              left: 60,
-              right: 60,
-              padding: "44px 50px",
-              background: "rgba(251,244,234,0.94)",
-              borderRadius: 40,
-              transform: `rotate(-2deg) scale(${1 + 0.015 * Math.sin(frame / 6)})`,
-              boxShadow: "0 18px 50px rgba(28,58,94,0.25)",
-            }}
-          >
-            <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: 78, lineHeight: 1.12, color: NAVY, textAlign: "center" }}>{tipp.hook}</div>
-          </div>
-        </Foto>
-      </Sequence>
+      {tipp.voice ? (
+        <>
+          <Audio src={staticFile(tipp.voice.src)} />
+          {/* Musik leise unter der Stimme */}
+          <Audio src={staticFile("ki-beat-32.wav")} volume={0.16} />
+        </>
+      ) : (
+        // eigener Ukulele-Beat (scripts/ki-beat.py), lizenzfrei
+        <Audio src={staticFile("ki-beat.wav")} />
+      )}
 
-      {/* Titel */}
-      <Sequence {...seg(1)}>
-        <TitleScene label={label} small={tipp.small} big={tipp.big} />
-      </Sequence>
-
-      <Sequence {...seg(2)}>
-        <Foto foto={b} focus="50% 30%">
-          <StepOnPhoto n={1} text={tipp.steps[0]} />
-        </Foto>
-      </Sequence>
-
-      <Sequence {...seg(3)}>
-        <StepOnCreme n={2} text={tipp.steps[1]} />
-      </Sequence>
-
-      <Sequence {...seg(4)}>
-        <Foto foto={a} focus="30% 80%">
-          <StepOnPhoto n={3} text={tipp.steps[2]} />
-        </Foto>
-      </Sequence>
-
-      <Sequence {...seg(5)}>
-        <FazitScene fazit={tipp.fazit} />
-      </Sequence>
-
-      <Sequence {...seg(6)}>
-        <CtaScene cta={tipp.cta} />
-      </Sequence>
+      {shots.map((s, i) => (
+        <Sequence key={i} from={s.from} durationInFrames={s.to - s.from}>
+          {s.el}
+        </Sequence>
+      ))}
 
       {/* Fortschritt oben: hält die Leute bis zum Schluss */}
       <div style={{ position: "absolute", top: 0, left: 0, height: 10, width: `${(frame / (durationInFrames - 1)) * 100}%`, background: BLUE }} />
-      {frame >= CUTS[1] && frame < CUTS[6] && <Badge text={label} />}
+      {frame >= titleFrom && frame < ctaFrom && <Badge text={label} />}
     </AbsoluteFill>
   );
 };

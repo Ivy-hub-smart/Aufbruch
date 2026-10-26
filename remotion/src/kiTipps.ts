@@ -9,6 +9,9 @@ export type KiTipp = {
   steps: [string, string, string];
   fazit: string;
   cta: string;
+  // eigene Stimme: Datei in public/ und Satzanfänge in Sekunden
+  // (Titel, Schritt 1, 2, 3, Fazit, Aufruf, Ende); die Bilder wechseln mit der Stimme
+  voice?: { src: string; cuts: [number, number, number, number, number, number, number] };
 };
 
 export const SERIE = 8;
@@ -26,6 +29,7 @@ export const KI_TIPPS: KiTipp[] = [
     ],
     fazit: "Einmal erstellt – immer wieder verkauft.",
     cta: "Speichern & folgen für Tipp 2!",
+    voice: { src: "voice-tipp-1.wav", cuts: [4.75, 8.7, 14.4, 21.7, 26.0, 28.7, 31.6] },
   },
   {
     id: "KiTipp2",
