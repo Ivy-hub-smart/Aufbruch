@@ -135,3 +135,14 @@ npm run render                                        # erst HyperFrames, dann R
 
 Ohne Zugriff auf remotion.media kann Remotion einen vorhandenen Chrome nutzen:
 `REMOTION_BROWSER=/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell npm run render`
+
+## Karussell: „5 Gründe für ein zweites Einkommen“
+
+Instagram-Karussell mit 5 Slides (1080×1080). Slide 1 ist das fertige Titelbild
+(`karussell/zweites-einkommen/assets/cover.png`), Slides 2–5 kommen aus
+`karussell/zweites-einkommen/slides.html` (Texte stehen dort im Objekt `slides`).
+Slide 5 ist der Aufruf „Kommentiere FREIHEIT“.
+
+```bash
+node karussell/zweites-einkommen/render.js   # schreibt out/slide-1.png … slide-5.png
+```
