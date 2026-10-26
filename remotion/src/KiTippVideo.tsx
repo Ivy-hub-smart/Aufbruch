@@ -42,7 +42,7 @@ export const kiTippSchema = z.object({
 });
 export type KiTippProps = z.infer<typeof kiTippSchema>;
 
-const Brush: React.FC<{ fill: string }> = ({ fill }) => (
+export const Brush: React.FC<{ fill: string }> = ({ fill }) => (
   <svg viewBox="0 0 400 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: -1 }}>
     <path d="M6 22 C80 6 250 2 392 14 C398 40 396 66 386 88 C260 98 120 96 10 84 C2 62 0 42 6 22Z" fill={fill} opacity=".95" />
     <path d="M0 30 C60 24 120 22 180 26" stroke={fill} strokeWidth="5" opacity=".5" fill="none" />
@@ -50,7 +50,7 @@ const Brush: React.FC<{ fill: string }> = ({ fill }) => (
   </svg>
 );
 
-const Logo: React.FC<{ light?: boolean }> = ({ light }) => {
+export const Logo: React.FC<{ light?: boolean }> = ({ light }) => {
   const c = light ? "#ffffff" : NAVY;
   return (
     <div style={{ position: "absolute", left: 0, right: 0, bottom: 90, textAlign: "center", color: c, fontFamily: SANS }}>
@@ -71,7 +71,7 @@ const useEnter = (delay = 0) => {
   return spring({ frame: frame - delay, fps, config: { damping: 14, stiffness: 170 } });
 };
 
-const Creme: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const Creme: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <AbsoluteFill>
     <OffthreadVideo src={staticFile("hyperframes-creme.mp4")} muted />
     {children}

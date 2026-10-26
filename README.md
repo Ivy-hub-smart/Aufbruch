@@ -65,7 +65,7 @@ bestimmen.“).
 
 Fertiges Video: `remotion/out/zwilling.mp4`
 
-## Serie „2. Einkommen mit KI“ (8 Reels + Bonus)
+## Serie „2. Einkommen mit KI“ (8 Reels)
 
 Acht Reels à 12 Sekunden im Stil des Karussells: Navy und Creme, Schreibschrift
 (Kaushan Script, Caveat), Logo-Wellen. Jedes Reel beginnt mit einer Hook, danach
@@ -82,7 +82,6 @@ Es gibt nur zwei Fotos, abwechselnd: Hocke am Steg und schwarzer Blazer.
 | 6 | Deine Idee auf 1000 Tassen – ohne Risiko. | Print-on-Demand | `remotion/out/ki-tipp-6.mp4` |
 | 7 | Was du heute über KI lernst, suchen andere morgen. | Bring anderen KI bei | `remotion/out/ki-tipp-7.mp4` |
 | 8 | Warum die meisten aufgeben – und du nicht. | Dranbleiben schlägt Talent | `remotion/out/ki-tipp-8.mp4` |
-| Bonus | Schreib das nie in Claude … | Prompt-Tipp: „Erstelle ein Top-Video mit Hook, damit mir alle folgen wollen.“ | `remotion/out/ki-tipp-9.mp4` |
 
 | Teil | Tool | Datei |
 |---|---|---|
@@ -114,6 +113,14 @@ npx remotion render KiTipp1 out/ki-tipp-1-neu.mp4 --props='{"nr":1,"big":"Mein T
 ```
 
 Nicht angegebene Texte bleiben wie in `kiTipps.ts`.
+
+## Reel „Folge mir“
+
+12 Sekunden, pro Bild eine kurze Aussage in grosser, fetter Schrift, alle 1,4 s
+ein Wechsel: „Ein Gehalt ist kein Plan B.“ → „Dein 2. Einkommen. Mit KI.“ →
+„Ohne zu kündigen.“ → „Ohne Vorwissen.“ → „30 Minuten am Tag.“ → „Ich zeige dir
+jeden Schritt.“ → „Ehrlich. Einfach. Echt.“ → „Folge mir @aufbruchsvision“.
+Texte in `remotion/src/FolgeMir.tsx` (`FOLGE_MIR`), Video `remotion/out/folge-mir.mp4`.
 
 ## Eigenes Foto einsetzen
 

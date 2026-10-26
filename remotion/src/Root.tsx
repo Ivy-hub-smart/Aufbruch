@@ -6,6 +6,7 @@ import { ZweifelTraum } from "./ZweifelTraum";
 import { Zwilling } from "./Zwilling";
 import { KiTippVideo, kiTippSchema } from "./KiTippVideo";
 import { KI_TIPPS, SERIE } from "./kiTipps";
+import { FOLGE_MIR, FolgeMir, folgeMirDauer, folgeMirSchema } from "./FolgeMir";
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -62,5 +63,15 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={{ nr: i + 1, label: tipp.label ?? `Tipp ${i + 1}/${SERIE}`, hook: tipp.hook, small: tipp.small, big: tipp.big, steps: tipp.steps, fazit: tipp.fazit, cta: tipp.cta }}
     />
   ))}
+  <Composition
+    id="FolgeMir"
+    component={FolgeMir}
+    schema={folgeMirSchema}
+    durationInFrames={folgeMirDauer(FOLGE_MIR)} // 12 Sekunden bei 30 fps
+    fps={30}
+    width={1080}
+    height={1920}
+    defaultProps={FOLGE_MIR}
+  />
   </>
 );
