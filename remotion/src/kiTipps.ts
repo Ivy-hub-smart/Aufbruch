@@ -11,7 +11,8 @@ export type KiTipp = {
   cta: string;
   // eigene Stimme: Datei in public/ und Satzanfänge in Sekunden
   // (Titel, Schritt 1, 2, 3, Fazit, Aufruf, Ende); die Bilder wechseln mit der Stimme
-  voice?: { src: string; cuts: [number, number, number, number, number, number, number] };
+  // subs: Untertitel in Schriftsprache [von, bis, Text] in Sekunden
+  voice?: { src: string; cuts: [number, number, number, number, number, number, number]; subs?: [number, number, string][] };
 };
 
 export const SERIE = 8;
@@ -29,7 +30,21 @@ export const KI_TIPPS: KiTipp[] = [
     ],
     fazit: "Einmal erstellt – immer wieder verkauft.",
     cta: "Speichern & folgen für Tipp 2!",
-    voice: { src: "voice-tipp-1.wav", cuts: [4.75, 8.7, 14.4, 21.7, 26.0, 28.7, 31.6] },
+    voice: {
+      src: "voice-tipp-1.wav",
+      cuts: [4.75, 8.7, 14.4, 21.7, 26.0, 28.7, 31.6],
+      subs: [
+        [0.5, 3.7, "Einmal erstellen – immer wieder verkaufen."],
+        [4.75, 8.4, "Das geht mit digitalen Produkten und KI."],
+        [8.7, 11.2, "Erstens: Die KI schreibt dir den Inhalt,"],
+        [11.4, 14.1, "zum Beispiel einen Planer oder ein E-Book."],
+        [14.4, 18.5, "Zweitens: Mit Canva gestaltest du es"],
+        [18.6, 21.3, "in einer Stunde."],
+        [21.7, 25.5, "Drittens: Du verkaufst es auf Etsy oder Gumroad."],
+        [26.0, 28.65, "Einmal gemacht – und es verdient immer wieder."],
+        [28.7, 31.0, "Speichere dir das und folge mir für Tipp 2!"],
+      ],
+    },
   },
   {
     id: "KiTipp2",

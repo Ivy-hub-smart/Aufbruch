@@ -248,10 +248,43 @@ export const KiTippVideo: React.FC<KiTippProps> = ({ nr, ...texte }) => {
         </Sequence>
       ))}
 
+      {tipp.voice?.subs?.map(([von, bis, text], i) => (
+        <Sequence key={`sub${i}`} from={Math.round(von * fps)} durationInFrames={Math.round((bis - von) * fps)}>
+          <Untertitel text={text} />
+        </Sequence>
+      ))}
+
       {/* Fortschritt oben: hält die Leute bis zum Schluss */}
       <div style={{ position: "absolute", top: 0, left: 0, height: 10, width: `${(frame / (durationInFrames - 1)) * 100}%`, background: BLUE }} />
       {frame >= titleFrom && frame < ctaFrom && <Badge text={label} />}
     </AbsoluteFill>
+  );
+};
+
+// Untertitel zur Stimme: weiss auf Navy, unten über dem Logo
+const Untertitel: React.FC<{ text: string }> = ({ text }) => {
+  const p = useEnter();
+  return (
+    <div style={{ position: "absolute", left: 50, right: 50, top: 1440, display: "flex", justifyContent: "center" }}>
+      <div
+        style={{
+          fontFamily: SANS,
+          fontWeight: 900,
+          fontSize: 50,
+          lineHeight: 1.2,
+          color: "white",
+          background: "rgba(28,58,94,0.92)",
+          padding: "18px 34px",
+          borderRadius: 26,
+          textAlign: "center",
+          boxShadow: "0 10px 30px rgba(28,58,94,0.3)",
+          opacity: p,
+          transform: `translateY(${(1 - p) * 30}px)`,
+        }}
+      >
+        {text}
+      </div>
+    </div>
   );
 };
 
