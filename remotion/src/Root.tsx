@@ -6,7 +6,7 @@ import { ZweifelTraum } from "./ZweifelTraum";
 import { Zwilling } from "./Zwilling";
 import { KiTippVideo, kiTippSchema } from "./KiTippVideo";
 import { KI_TIPPS, SERIE } from "./kiTipps";
-import { AUTO_FAHRT, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
+import { AUTO_FAHRT, FERTIG_MACHEN, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
 import { FOLGE_MIR, FolgeMir, folgeMirDauer, folgeMirSchema } from "./FolgeMir";
 
 export const RemotionRoot: React.FC = () => (
@@ -83,6 +83,16 @@ export const RemotionRoot: React.FC = () => (
     width={1080}
     height={1920}
     defaultProps={AUTO_FAHRT}
+  />
+  <Composition
+    id="FertigMachen"
+    component={AutoFahrt}
+    schema={autoFahrtSchema}
+    durationInFrames={autoFahrtDauer(FERTIG_MACHEN)} // knapp 8 Sekunden
+    fps={30}
+    width={1080}
+    height={1920}
+    defaultProps={FERTIG_MACHEN}
   />
   </>
 );

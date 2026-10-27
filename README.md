@@ -144,6 +144,13 @@ Texte in `remotion/src/FolgeMir.tsx` (`FOLGE_MIR`), Video `remotion/out/folge-mi
 darüber dein bester Hook in drei Zeilen: „Niemand kommt, um dir das Leben aufzubauen, …“.
 Texte in `remotion/src/AutoFahrt.tsx`, Video `remotion/out/auto-fahrt.mp4`.
 
+## Reel „Fertigmachen“
+
+8 Sekunden aus IMG_8246.mov (`remotion/public/fertig-machen.mp4`): ich schminke mich,
+oben die Geschichte „Bachelor. Master. Jahrelange Erfahrung. – Und trotzdem das Gefühl:
+Reicht das nicht? – Darum baue ich mir jetzt meinen Plan B. Folge mir.“
+Gleiche Vorlage wie „Autofahrt“ (`remotion/src/AutoFahrt.tsx`, `FERTIG_MACHEN`).
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
