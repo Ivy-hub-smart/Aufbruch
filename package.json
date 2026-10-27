@@ -18,6 +18,7 @@
     "render:ki-tipps": "python3 remotion/scripts/ki-beat.py tipps remotion/public/ki-beat.wav && cd remotion && for i in 1 2 3 4 5 6 7 8; do npx remotion render KiTipp$i out/ki-tipp-$i.mp4 || exit 1; done",
     "render:folge-mir": "python3 remotion/scripts/ki-beat.py folge remotion/public/folge-mir-beat.wav && cd remotion && npx remotion render FolgeMir out/folge-mir.mp4",
     "render:auto-fahrt": "cd remotion && npx remotion render AutoFahrt out/auto-fahrt.mp4",
-    "render:fertig-machen": "cd remotion && npx remotion render FertigMachen out/fertig-machen.mp4"
+    "render:fertig-machen": "cd remotion && npx remotion render FertigMachen out/fertig-machen.mp4",
+    "render:fertig-machen-du": "cd remotion && npx remotion render FertigMachenDu out/fertig-machen-du.mp4"
   }
 }

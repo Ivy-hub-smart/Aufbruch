@@ -39,6 +39,18 @@ export const FERTIG_MACHEN: AutoFahrtProps = {
   ],
 };
 
+// Variante mit „Du“-Hook: spricht Fremde in der ersten Sekunde direkt an
+export const FERTIG_MACHEN_DU: AutoFahrtProps = {
+  video: "fertig-machen.mp4",
+  top: 150,
+  zeilen: [
+    { text: "Du hast alles richtig gemacht –", sek: 2.4 },
+    { text: "und trotzdem reicht es nicht?", sek: 2.4 },
+    { text: "Ich baue mir gerade meinen Plan B auf. Mit KI, 10 Minuten am Tag.", sek: 3.0 },
+    { text: "Kennst du das? Schreib ein 🙋‍♀️", sek: 2.2 },
+  ],
+};
+
 const Zeile: React.FC<{ text: string; top: number }> = ({ text, top }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();

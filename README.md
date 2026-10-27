@@ -150,6 +150,8 @@ Texte in `remotion/src/AutoFahrt.tsx`, Video `remotion/out/auto-fahrt.mp4`.
 oben die Geschichte „Bachelor. Master. Jahrelange Erfahrung. – Und trotzdem das Gefühl:
 Reicht das nicht? – Darum baue ich mir jetzt meinen Plan B. Folge mir.“
 Gleiche Vorlage wie „Autofahrt“ (`remotion/src/AutoFahrt.tsx`, `FERTIG_MACHEN`).
+Variante mit „Du“-Hook („Du hast alles richtig gemacht – und trotzdem reicht es nicht?“):
+`FERTIG_MACHEN_DU`, Video `remotion/out/fertig-machen-du.mp4`.
 
 ## Eigenes Foto einsetzen
 
