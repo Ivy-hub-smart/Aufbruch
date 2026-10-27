@@ -6,7 +6,8 @@ const NAVY = "#1c3a5e";
 const SANS = "Montserrat, sans-serif";
 
 // Echtes Video mit einem starken Satz als Hook:
-// pro Abschnitt eine kurze Zeile, gross und mittig, schon im ersten Frame.
+// pro Abschnitt eine kurze Zeile, gross und mittig, schon im ersten Frame;
+// die letzte Zeile lädt zum Kommentieren ein.
 // video: Datei in public/, top: Höhe der Textkarte (dort, wo das Gesicht nicht ist)
 export const autoFahrtSchema = z.object({
   video: z.string(),
@@ -22,6 +23,7 @@ export const AUTO_FAHRT: AutoFahrtProps = {
     { text: "Niemand kommt, um dir das Leben aufzubauen,", sek: 3.3 },
     { text: "von dem du heimlich träumst.", sek: 3.2 },
     { text: "Also fange ich selbst an. Folge mir auf dem Weg.", sek: 3.5 },
+    { text: "Kennst du das? Schreib ein 🙋‍♀️", sek: 2.2 },
   ],
 };
 
@@ -33,6 +35,7 @@ export const FERTIG_MACHEN: AutoFahrtProps = {
     { text: "Bachelor. Master. Jahrelange Erfahrung.", sek: 2.6 },
     { text: "Und trotzdem das Gefühl: Reicht das nicht?", sek: 2.7 },
     { text: "Darum baue ich mir jetzt meinen Plan B. Folge mir.", sek: 2.6 },
+    { text: "Kennst du das? Schreib ein 🙋‍♀️", sek: 2.2 },
   ],
 };
 
