@@ -138,6 +138,12 @@ jeden Schritt.“ → „Ehrlich. Einfach. Echt.“ → „Folge mir @aufbruchsv
 Musik: eigener Beat mit Klavier und Ukulele, 90 BPM, ein Wechsel alle 2 Schläge.
 Texte in `remotion/src/FolgeMir.tsx` (`FOLGE_MIR`), Video `remotion/out/folge-mir.mp4`.
 
+## Reel „Autofahrt“
+
+10 Sekunden aus deinem echten Video (`remotion/public/auto-fahrt.mp4`, aus IMG_8262.mov),
+darüber dein bester Hook in drei Zeilen: „Niemand kommt, um dir das Leben aufzubauen, …“.
+Texte in `remotion/src/AutoFahrt.tsx`, Video `remotion/out/auto-fahrt.mp4`.
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
