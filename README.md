@@ -167,10 +167,11 @@ npm run render:wasser && npm run render:gedanken
 
 ## Vorstellung zum Anpinnen
 
-Karussell mit 3 Folien (1080×1350) im Gedanken-Look: „Hi, ich bin Yvonne, 43 …“ mit
-weissem Balken „Das hätte ich aber nicht erwartet 😊👉“, dann „Das erwartet dich hier“
-und „Lust, mitzukommen?“. Texte in `remotion/src/Vorstellung.tsx`,
-Bilder `remotion/out/vorstellung-1.png` bis `-3.png` (`npm run render:vorstellung`).
+Karussell mit 4 Folien (1080×1350) im Gedanken-Look: „Hi, ich bin Yvonne. … Mein grosser
+Traum: eine Weltreise.“ mit weissem Balken „Das hätte ich aber nicht erwartet 😊👉“, dann
+„… wie viel Freude mir das macht!“, „Das erwartet dich hier“ und „Lust, mitzukommen?“.
+Texte in `remotion/src/Vorstellung.tsx`, Bilder `remotion/out/vorstellung-1.png` bis `-4.png`
+(`npm run render:vorstellung`).
 
 ## Eigenes Foto einsetzen
 

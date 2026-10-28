@@ -21,9 +21,15 @@ export type VorstellungProps = z.infer<typeof folie>;
 export const VORSTELLUNG: VorstellungProps[] = [
   {
     foto: true,
-    titel: "Hi, ich bin Yvonne,",
-    zeilen: ["43 Jahre alt.", "Vor 1 Monat habe ich beschlossen, mit Instagram zu starten.", "In der Hoffnung, mir eine Weltreise / ein bisschen Taschengeld zu verdienen."],
+    titel: "Hi, ich bin Yvonne.",
+    zeilen: ["Vor 1 Monat habe ich beschlossen, mit Instagram zu starten.", "Mein grosser Traum: eine Weltreise. 🌍"],
     balken: "Das hätte ich aber nicht erwartet 😊👉",
+  },
+  {
+    foto: false,
+    titel: "… wie viel Freude mir das macht! 🤍",
+    zeilen: ["Ich nehme dich mit auf meinem Weg."],
+    balken: "Weiter 👉",
   },
   {
     foto: false,
