@@ -6,14 +6,16 @@ import { z } from "zod";
 const SANS = "Montserrat, sans-serif";
 const BRAUN = "#4a3424";
 
-// Stil der erfolgreichsten Reels: Sand unter Wasser, weisse Schrift,
-// erste Zeile fett und sofort da, die weiteren Zeilen kommen nacheinander dazu.
+// Stil der erfolgreichsten Reels: Sand unter Wasser, weisse Schrift.
+// hook: 2–4 Wörter riesig in der ersten Sekunde, damit der Daumen stoppt;
+// danach kommen die Zeilen nacheinander dazu.
 const zeile = z.object({ text: z.string(), fett: z.boolean().optional() });
-export const gedankeSchema = z.object({ zeilen: z.array(zeile), frage: z.string() });
+export const gedankeSchema = z.object({ hook: z.string(), zeilen: z.array(zeile), frage: z.string() });
 export type GedankeProps = z.infer<typeof gedankeSchema>;
 
 export const GEDANKEN: GedankeProps[] = [
   {
+    hook: "Du bist nicht zu spät.",
     zeilen: [
       { text: "Du bist nicht zu spät.", fett: true },
       { text: "Du hast nur gedacht, du musst erst perfekt sein." },
@@ -23,6 +25,7 @@ export const GEDANKEN: GedankeProps[] = [
     frage: "Du auch? Schreib ein 🤍",
   },
   {
+    hook: "«Sei doch zufrieden.»",
     zeilen: [
       { text: "Sie sagen: «Sei doch zufrieden.»", fett: true },
       { text: "Ich bin dankbar. Wirklich." },
@@ -33,6 +36,7 @@ export const GEDANKEN: GedankeProps[] = [
     frage: "Geht's dir auch so? Schreib ein 🤍",
   },
   {
+    hook: "Niemand sieht es.",
     zeilen: [
       { text: "Niemand sieht, wie viel du trägst.", fett: true },
       { text: "Job. Familie. Haushalt. Termine." },
@@ -44,6 +48,7 @@ export const GEDANKEN: GedankeProps[] = [
   },
 ];
 
+const HOOK = 48; // 1,6 s Riesen-Hook, danach der Textblock
 const ABSTAND = 66; // alle 2,2 s kommt eine Zeile dazu
 
 // 0 → 1 über `dauer` Frames, sanft auslaufend
@@ -55,7 +60,7 @@ const weich = (f: number, dauer: number) =>
 const Zeile: React.FC<{ text: string; fett?: boolean; start: number }> = ({ text, fett, start }) => {
   const frame = useCurrentFrame();
   // weiches Einblenden ohne Federn: aus leichter Unschärfe in knapp einer Sekunde
-  const p = start === 0 ? 1 : weich(frame - start, 26);
+  const p = weich(frame - start, 22);
   return (
     <div
       style={{
@@ -100,21 +105,55 @@ const Frage: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-export const Gedanke: React.FC<GedankeProps> = ({ zeilen, frage }) => {
+// riesiger Hook im ersten Bild: dunklerer Grund, leichtes Heranzoomen, dann weich weg
+const RiesenHook: React.FC<{ text: string }> = ({ text }) => {
+  const frame = useCurrentFrame();
+  const weg = 1 - weich(frame - (HOOK - 12), 12);
+  const zoom = interpolate(frame, [0, HOOK], [1, 1.08]);
+  return (
+    <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: "0 70px 200px", opacity: weg }}>
+      <AbsoluteFill style={{ background: "radial-gradient(ellipse at 50% 45%, rgba(40,25,15,0.15) 0%, rgba(40,25,15,0.55) 100%)" }} />
+      <div
+        style={{
+          fontFamily: SANS,
+          fontWeight: 800,
+          fontSize: 124,
+          lineHeight: 1.08,
+          color: "white",
+          textAlign: "center",
+          textShadow: "0 3px 10px rgba(40,25,15,0.6), 0 6px 40px rgba(40,25,15,0.8)",
+          transform: `scale(${zoom})`,
+        }}
+      >
+        {text}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+export const Gedanke: React.FC<GedankeProps> = ({ hook, zeilen, frage }) => {
   const { fps, durationInFrames } = useVideoConfig();
+  const frame = useCurrentFrame();
+  // Hintergrund bewegt sich vom ersten Bild an sichtbar
+  const bgZoom = interpolate(frame, [0, durationInFrames], [1.12, 1]);
   return (
     <AbsoluteFill>
-      <OffthreadVideo src={staticFile("hyperframes-wasser.mp4")} muted />
+      <AbsoluteFill style={{ transform: `scale(${bgZoom})` }}>
+        <OffthreadVideo src={staticFile("hyperframes-wasser.mp4")} muted />
+      </AbsoluteFill>
       {/* ruhiges Klavier (scripts/ki-beat.py ruhig); in Instagram gern einen ruhigen Trend-Sound darüberlegen */}
       <Audio src={staticFile("gedanke-klavier.wav")} volume={0.7} />
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: "0 90px 260px", textAlign: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 34 }}>
           {zeilen.map((z, i) => (
-            <Zeile key={i} text={z.text} fett={z.fett} start={i * ABSTAND} />
+            <Zeile key={i} text={z.text} fett={z.fett} start={HOOK + i * ABSTAND} />
           ))}
         </div>
       </AbsoluteFill>
-      <Sequence from={2 * fps} durationInFrames={durationInFrames - 2 * fps}>
+      <Sequence durationInFrames={HOOK}>
+        <RiesenHook text={hook} />
+      </Sequence>
+      <Sequence from={HOOK + fps} durationInFrames={durationInFrames - HOOK - fps}>
         <Frage text={frage} />
       </Sequence>
     </AbsoluteFill>
@@ -122,4 +161,4 @@ export const Gedanke: React.FC<GedankeProps> = ({ zeilen, frage }) => {
 };
 
 // so lange, dass die letzte Zeile noch 3 Sekunden steht
-export const gedankeDauer = (p: GedankeProps) => (p.zeilen.length - 1) * ABSTAND + 90;
+export const gedankeDauer = (p: GedankeProps) => HOOK + (p.zeilen.length - 1) * ABSTAND + 90;
