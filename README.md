@@ -153,6 +153,17 @@ Gleiche Vorlage wie „Autofahrt“ (`remotion/src/AutoFahrt.tsx`, `FERTIG_MACHE
 Variante mit „Du“-Hook („Du hast alles richtig gemacht – und trotzdem reicht es nicht?“):
 `FERTIG_MACHEN_DU`, Video `remotion/out/fertig-machen-du.mp4`.
 
+## Gedanken-Reels (Stil der erfolgreichsten Reels)
+
+Sand unter Wasser (HyperFrames, `hyperframes/wasser/index.html`), weisse Schrift,
+erste Zeile fett und sofort sichtbar, alle 2,2 s kommt eine Zeile dazu, ab Sekunde 2
+die Frage „Kennst du das? Schreib ein 🤍“. Texte in `remotion/src/Gedanke.tsx` (`GEDANKEN`),
+Videos `remotion/out/gedanke-1.mp4` bis `gedanke-3.mp4`.
+
+```bash
+npm run render:wasser && npm run render:gedanken
+```
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.

@@ -19,6 +19,8 @@
     "render:folge-mir": "python3 remotion/scripts/ki-beat.py folge remotion/public/folge-mir-beat.wav && cd remotion && npx remotion render FolgeMir out/folge-mir.mp4",
     "render:auto-fahrt": "cd remotion && npx remotion render AutoFahrt out/auto-fahrt.mp4",
     "render:fertig-machen": "cd remotion && npx remotion render FertigMachen out/fertig-machen.mp4",
-    "render:fertig-machen-du": "cd remotion && npx remotion render FertigMachenDu out/fertig-machen-du.mp4"
+    "render:fertig-machen-du": "cd remotion && npx remotion render FertigMachenDu out/fertig-machen-du.mp4",
+    "render:wasser": "cd hyperframes/wasser && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wasser.mp4",
+    "render:gedanken": "cd remotion && for i in 1 2 3; do npx remotion render Gedanke$i out/gedanke-$i.mp4 || exit 1; done"
   }
 }
