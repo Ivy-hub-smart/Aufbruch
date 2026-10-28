@@ -21,7 +21,8 @@
     "render:fertig-machen": "cd remotion && npx remotion render FertigMachen out/fertig-machen.mp4",
     "render:fertig-machen-du": "cd remotion && npx remotion render FertigMachenDu out/fertig-machen-du.mp4",
     "render:wasser": "cd hyperframes/wasser && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wasser.mp4",
-    "render:gedanken": "cd remotion && for i in 1 2 3; do npx remotion render Gedanke$i out/gedanke-$i.mp4 || exit 1; done",
-    "render:vorstellung": "cd remotion && for i in 1 2 3 4; do npx remotion still Vorstellung$i out/vorstellung-$i.png || exit 1; done"
+    "render:gedanken": "cd remotion && for i in 1 2 3 4 5 6; do npx remotion render Gedanke$i out/gedanke-$i.mp4 || exit 1; done",
+    "render:vorstellung": "cd remotion && for i in 1 2 3 4; do npx remotion still Vorstellung$i out/vorstellung-$i.png || exit 1; done",
+    "render:pdf-stories": "cd remotion && for i in 1 2; do npx remotion still PdfStory$i out/pdf-story-$i.png || exit 1; done"
   }
 }

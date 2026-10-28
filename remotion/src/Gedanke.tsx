@@ -46,6 +46,40 @@ export const GEDANKEN: GedankeProps[] = [
     ],
     frage: "Kennst du das? Schreib ein 🤍",
   },
+  // Werbung für das Gratis-PDF von Sales Circle: „Kommentiere START“
+  {
+    hook: "Wo fange ich an?",
+    zeilen: [
+      { text: "Ich wusste lange nicht, wo anfangen.", fett: true },
+      { text: "Tausend Ideen. Videos. Kurse." },
+      { text: "Und am Ende: nichts angefangen." },
+      { text: "Was mir gefehlt hat: ein klarer erster Schritt.", fett: true },
+      { text: "Kommentiere START – ich schick dir den Gratis-Guide." },
+    ],
+    frage: "Kommentiere START 👇",
+  },
+  {
+    hook: "Nicht noch ein Kurs.",
+    zeilen: [
+      { text: "Ich brauchte nicht noch mehr Wissen.", fett: true },
+      { text: "Ich brauchte einen Plan." },
+      { text: "Einen, der neben dem Job Platz hat." },
+      { text: "Strategisch. Schritt für Schritt.", fett: true },
+      { text: "Kommentiere START für den Gratis-Guide." },
+    ],
+    frage: "Kommentiere START 👇",
+  },
+  {
+    hook: "Irgendwann ist kein Plan.",
+    zeilen: [
+      { text: "Ich will nicht warten, bis «irgendwann».", fett: true },
+      { text: "Darum lerne ich jetzt, wie digitales Einkommen funktioniert." },
+      { text: "Ganz ohne meinen Job zu kündigen." },
+      { text: "Gratis-Guide: Strategischer Einstieg ins digitale Einkommen", fett: true },
+      { text: "Kommentiere START – ich schick ihn dir." },
+    ],
+    frage: "Kommentiere START 👇",
+  },
 ];
 
 const HOOK = 48; // 1,6 s Riesen-Hook, danach der Textblock

@@ -45,6 +45,22 @@ export const VORSTELLUNG: VorstellungProps[] = [
   },
 ];
 
+// Story-Bilder (9:16) im gleichen Look: Hinweis aufs Gratis-PDF, darunter Platz für den Link-Sticker
+export const PDF_STORIES: VorstellungProps[] = [
+  {
+    foto: true,
+    titel: "Gratis-Guide 🤍",
+    zeilen: ["Strategischer Einstieg ins digitale Einkommen", "Für alle, die neben dem Job starten wollen."],
+    balken: "Werbung · Link 👇",
+  },
+  {
+    foto: false,
+    titel: "Wo fange ich an?",
+    zeilen: ["Das habe ich mich lange gefragt.", "Dieser Gratis-Guide zeigt dir einen klaren ersten Schritt."],
+    balken: "Werbung · Link 👇",
+  },
+];
+
 export const Vorstellung: React.FC<VorstellungProps> = ({ foto, titel, zeilen, balken }) => (
   <AbsoluteFill>
     <Img src={staticFile("wasser-hintergrund.jpg")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />

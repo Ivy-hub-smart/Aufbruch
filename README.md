@@ -173,6 +173,12 @@ Traum: eine Weltreise.“ mit weissem Balken „Das hätte ich aber nicht erwart
 Texte in `remotion/src/Vorstellung.tsx`, Bilder `remotion/out/vorstellung-1.png` bis `-4.png`
 (`npm run render:vorstellung`).
 
+## Werbung für den Gratis-Guide (Sales Circle)
+
+„Strategischer Einstieg ins digitale Einkommen“: Gedanken-Reels 4–6 mit „Kommentiere START“
+(`remotion/out/gedanke-4.mp4` bis `-6.mp4`) und zwei Story-Bilder mit Platz für den
+Link-Sticker (`remotion/out/pdf-story-1.png`, `-2.png`, `npm run render:pdf-stories`).
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
