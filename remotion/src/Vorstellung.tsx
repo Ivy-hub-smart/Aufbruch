@@ -34,7 +34,7 @@ export const VORSTELLUNG: VorstellungProps[] = [
   {
     foto: false,
     titel: "Das erwartet dich hier:",
-    zeilen: ["🤍 Ehrliche Gedanken für Frauen, die mehr wollen als nur funktionieren", "🌿 Mein Weg zum 2. Einkommen – Schritt für Schritt", "💡 Einfache KI-Tipps, die Zeit sparen"],
+    zeilen: ["🤍 Ehrliche Gedanken für alle, die mehr wollen als nur funktionieren", "🌿 Mein Weg zum 2. Einkommen – Schritt für Schritt", "💡 Einfache KI-Tipps, die Zeit sparen"],
     balken: "Weiter 👉",
   },
   {
