@@ -3,6 +3,7 @@
 python3 ki-beat.py tipps  public/ki-beat.wav       # 112,5 BPM, Wechsel alle 3 Schläge
 python3 ki-beat.py folge  public/folge-mir-beat.wav  # 90 BPM, wärmer, mit Klavier
 python3 ki-beat.py tipps  public/ki-beat-32.wav 32  # beliebige Länge, unter Voice-over, ohne Glocken
+python3 ki-beat.py ruhig  public/gedanke-klavier.wav  # nur ruhiges Klavier für die Gedanken-Reels
 Jeder Bildwechsel fällt auf einen Schlag und bekommt einen hellen Glocken-Ton.
 """
 import sys
@@ -20,6 +21,9 @@ MODE = sys.argv[1]
 if MODE == "tipps":
     BPM = 112.5  # 1 Schlag = 16 Frames
     CUTS = [64, 112, 160, 208, 256, 304]  # Frames, wie CUTS in KiTippVideo.tsx
+elif MODE == "ruhig":
+    BPM = 60 / 1.1  # 2 Schläge = 2,2 s = eine neue Zeile in Gedanke.tsx
+    CUTS = []  # keine Glocken: nichts soll den ruhigen Text stören
 else:
     BPM = 90.0  # 1 Schlag = 20 Frames
     CUTS = [40 * i for i in range(1, 8)]  # wie SZENE in FolgeMir.tsx
@@ -110,6 +114,13 @@ for bar in range(bars):
             notes = chord if down else chord[::-1]
             for k, note in enumerate(notes):
                 add(pluck(hz(note), bright=0.55 if down else 0.4), t0 + eighth * beat / 2 + k * 0.012, pan=-0.25, gain=0.5 if down else 0.32)
+    elif MODE == "ruhig":
+        # weiche Klavier-Akkorde, dazu zwei leise hohe Töne pro Takt
+        for k, note in enumerate(chord):
+            add(piano(hz(note), dur=5.0), t0 + k * 0.06, gain=0.7)
+        for b, idx in [(1, 3), (2.5, 2)]:
+            add(piano(hz(chord[idx] + 12), dur=3.0), t0 + b * beat, pan=0.25, gain=0.35)
+        continue
     else:
         for k, note in enumerate(chord):
             add(piano(hz(note)), t0 + k * 0.02, gain=0.9)
@@ -135,8 +146,11 @@ melody = [72, 74, 76, 79, 76, 81, 84]
 for i, f in enumerate(CUTS):
     add(glock(hz(melody[i % len(melody)] + 12)), f / FPS, pan=0.2 * (-1) ** i)
 
-# Schluss: ausklingen lassen
+# Schluss: ausklingen lassen (ruhig: auch sanft einblenden)
 fade = np.ones(n)
+if MODE == "ruhig":
+    fi = int(0.8 * SR)
+    fade[:fi] = np.linspace(0, 1, fi)
 fl = int(0.6 * SR)
 fade[-fl:] = np.linspace(1, 0, fl) ** 2
 mix = np.stack([L * fade, R * fade], axis=1)

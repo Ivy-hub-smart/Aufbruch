@@ -157,7 +157,8 @@ Variante mit „Du“-Hook („Du hast alles richtig gemacht – und trotzdem re
 
 Sand unter Wasser (HyperFrames, `hyperframes/wasser/index.html`), weisse Schrift,
 erste Zeile fett und sofort sichtbar, alle 2,2 s kommt eine Zeile dazu, ab Sekunde 2
-die Frage „Kennst du das? Schreib ein 🤍“. Texte in `remotion/src/Gedanke.tsx` (`GEDANKEN`),
+die Frage „Kennst du das? Schreib ein 🤍“, alles weich eingeblendet, dazu ruhiges Klavier
+(`remotion/public/gedanke-klavier.wav`, `ki-beat.py ruhig`). Texte in `remotion/src/Gedanke.tsx` (`GEDANKEN`),
 Videos `remotion/out/gedanke-1.mp4` bis `gedanke-3.mp4`.
 
 ```bash

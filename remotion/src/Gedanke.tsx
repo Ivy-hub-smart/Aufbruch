@@ -1,6 +1,6 @@
 import "@fontsource/montserrat/500.css";
 import "@fontsource/montserrat/800.css";
-import { AbsoluteFill, Audio, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Easing, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { z } from "zod";
 
 const SANS = "Montserrat, sans-serif";
@@ -46,12 +46,16 @@ export const GEDANKEN: GedankeProps[] = [
 
 const ABSTAND = 66; // alle 2,2 s kommt eine Zeile dazu
 
+// 0 → 1 über `dauer` Frames, sanft auslaufend
+const weich = (f: number, dauer: number) =>
+  interpolate(f, [0, dauer], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
+
 // start: Frame, ab dem die Zeile einblendet; vorher unsichtbar, aber mit Platz,
 // damit der Textblock beim Dazukommen nicht springt
 const Zeile: React.FC<{ text: string; fett?: boolean; start: number }> = ({ text, fett, start }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const p = start === 0 ? 1 : spring({ frame: frame - start, fps, config: { damping: 18, stiffness: 120 } });
+  // weiches Einblenden ohne Federn: aus leichter Unschärfe in knapp einer Sekunde
+  const p = start === 0 ? 1 : weich(frame - start, 26);
   return (
     <div
       style={{
@@ -62,7 +66,8 @@ const Zeile: React.FC<{ text: string; fett?: boolean; start: number }> = ({ text
         color: "white",
         textShadow: "0 2px 6px rgba(40,25,15,0.5), 0 4px 28px rgba(40,25,15,0.7)",
         opacity: p,
-        transform: `translateY(${(1 - p) * 24}px)`,
+        filter: `blur(${(1 - p) * 8}px)`,
+        transform: `translateY(${(1 - p) * 14}px)`,
       }}
     >
       {text}
@@ -72,9 +77,7 @@ const Zeile: React.FC<{ text: string; fett?: boolean; start: number }> = ({ text
 
 // Einladung zum Kommentieren: ab Sekunde 2, unten über dem Caption-Bereich
 const Frage: React.FC<{ text: string }> = ({ text }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const p = spring({ frame, fps, config: { damping: 12, stiffness: 180 } });
+  const p = weich(useCurrentFrame(), 24);
   return (
     <div style={{ position: "absolute", top: 1430, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
       <div
@@ -87,7 +90,8 @@ const Frage: React.FC<{ text: string }> = ({ text }) => {
           padding: "16px 38px",
           borderRadius: 999,
           boxShadow: "0 10px 30px rgba(40,25,15,0.3)",
-          transform: `scale(${p * (1 + 0.03 * Math.sin(frame / 7))})`,
+          opacity: p,
+          transform: `translateY(${(1 - p) * 16}px)`,
         }}
       >
         {text}
@@ -101,8 +105,8 @@ export const Gedanke: React.FC<GedankeProps> = ({ zeilen, frage }) => {
   return (
     <AbsoluteFill>
       <OffthreadVideo src={staticFile("hyperframes-wasser.mp4")} muted />
-      {/* leiser eigener Beat; in Instagram lieber einen ruhigen Trend-Sound darüberlegen */}
-      <Audio src={staticFile("folge-mir-beat.wav")} volume={0.5} />
+      {/* ruhiges Klavier (scripts/ki-beat.py ruhig); in Instagram gern einen ruhigen Trend-Sound darüberlegen */}
+      <Audio src={staticFile("gedanke-klavier.wav")} volume={0.7} />
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: "0 90px 260px", textAlign: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 34 }}>
           {zeilen.map((z, i) => (
