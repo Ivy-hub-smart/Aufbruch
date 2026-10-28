@@ -11,7 +11,9 @@
       .layer { position: absolute; inset: 0; }
       /* Look der erfolgreichsten Reels: Sand unter Wasser, Lichtlinien wandern ruhig */
       #sand { background: radial-gradient(ellipse at 40% 30%, #d9c4ab 0%, #bfa588 45%, #8f7660 100%); }
-      #licht { position: absolute; left: -200px; top: -200px; width: 1480px; height: 2320px; mix-blend-mode: soft-light; filter: blur(5px); opacity: 0.95; }
+      .licht { position: absolute; left: -200px; top: -200px; width: 1480px; height: 2320px; mix-blend-mode: soft-light; filter: blur(5px); }
+      #licht1 { opacity: 0.9; }
+      #licht2 { opacity: 0.55; }
       #schleier { background: linear-gradient(180deg, rgba(60,42,28,0.30) 0%, rgba(60,42,28,0.10) 40%, rgba(60,42,28,0.35) 100%); }
       #marke { position: absolute; left: 0; right: 0; bottom: 330px; text-align: center; font: 500 22px Georgia, serif; letter-spacing: 1px; color: rgba(255,255,255,0.7); }
     </style>
@@ -24,11 +26,12 @@
       <div id="text" class="clip layer" data-start="0" data-duration="14" data-track-index="3"></div>
     </div>
     <script>
-      // Kaustik-Lichtlinien: Rauschen, dessen Kanten zu hellen Linien geschärft werden
-      document.getElementById("wellen").innerHTML = `
-        <svg id="licht" viewBox="0 0 1480 2320">
-          <filter id="kaustik" x="0" y="0" width="100%" height="100%">
-            <feTurbulence id="rauschen" type="fractalNoise" baseFrequency="0.0045 0.009" numOctaves="2" seed="7" result="n"/>
+      // Kaustik-Lichtlinien: zwei feste Lichtmuster, die langsam gegeneinander gleiten.
+      // Die Form der Muster bleibt gleich, darum fliesst das Licht ohne Ruckeln.
+      const muster = (id, seed, freq) => `
+        <svg id="${id}" class="licht" viewBox="0 0 1480 2320">
+          <filter id="k${id}" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="2" seed="${seed}" result="n"/>
             <feColorMatrix in="n" type="matrix" values="1 0 0 0 0  1 0 0 0 0  1 0 0 0 0  0 0 0 0 1" result="grau"/>
             <feComponentTransfer in="grau">
               <feFuncR type="table" tableValues="0 0 0 0.25 1 0.25 0 0 0"/>
@@ -37,15 +40,16 @@
               <feFuncA type="table" tableValues="1 1"/>
             </feComponentTransfer>
           </filter>
-          <rect width="1480" height="2320" filter="url(#kaustik)"/>
+          <rect width="1480" height="2320" filter="url(#k${id})"/>
         </svg>`;
+      document.getElementById("wellen").innerHTML = muster("licht1", 7, "0.0045 0.009") + muster("licht2", 23, "0.0055 0.0075");
       document.getElementById("text").innerHTML = '<div id="marke">AufbruchsVision</div>';
 
       const D = 14;
       const tl = gsap.timeline({ paused: true });
-      // langsames Wogen: Muster verformt sich und treibt schräg
-      tl.fromTo("#rauschen", { attr: { baseFrequency: "0.0045 0.009" } }, { attr: { baseFrequency: "0.0052 0.0105" }, duration: D / 2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
-      tl.fromTo("#licht", { x: 0, y: 0, rotation: -2 }, { x: -140, y: -90, rotation: 2, duration: D, ease: "sine.inOut" }, 0);
+      // gleichmässiges, langsames Gleiten (ease none = keine Rucke)
+      tl.fromTo("#licht1", { x: 0, y: 0 }, { x: -160, y: -70, duration: D, ease: "none" }, 0);
+      tl.fromTo("#licht2", { x: -160, y: -40 }, { x: 0, y: -120, duration: D, ease: "none" }, 0);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;
