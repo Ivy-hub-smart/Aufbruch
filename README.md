@@ -165,6 +165,13 @@ Videos `remotion/out/gedanke-1.mp4` bis `gedanke-3.mp4`.
 npm run render:wasser && npm run render:gedanken
 ```
 
+## Vorstellung zum Anpinnen
+
+Karussell mit 3 Folien (1080×1350) im Gedanken-Look: „Hi, ich bin Yvonne, 43 …“ mit
+weissem Balken „Das hätte ich aber nicht erwartet 😊👉“, dann „Das erwartet dich hier“
+und „Lust, mitzukommen?“. Texte in `remotion/src/Vorstellung.tsx`,
+Bilder `remotion/out/vorstellung-1.png` bis `-3.png` (`npm run render:vorstellung`).
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
