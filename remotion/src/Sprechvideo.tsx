@@ -6,6 +6,9 @@ import { z } from "zod";
 const SANS = "Montserrat, sans-serif";
 const BRAUN = "#4a3424";
 const CREME = "rgba(250,243,234,0.96)";
+// wie in den Gedanken-Reels: weisse Schrift mit warmem Schatten, auf leicht braunem Grund
+const SCHATTEN = "0 2px 6px rgba(40,25,15,0.5), 0 4px 28px rgba(40,25,15,0.7)";
+const SAND = "rgba(74,52,36,0.55)";
 
 // Video, in dem ich in die Kamera spreche. Darüber kommen Karten zu den Sätzen:
 // hook = gross oben, karte = Prompt zum Abfotografieren unten, cta = Pille unten.
@@ -56,9 +59,9 @@ const Einblendung: React.FC<{ art: "hook" | "karte" | "cta"; titel?: string; tex
   if (art === "hook") {
     return (
       <div style={{ position: "absolute", top: 110, left: 50, right: 50, display: "flex", justifyContent: "center", ...stil }}>
-        <div style={{ background: CREME, borderRadius: 32, padding: "26px 40px 32px", textAlign: "center", boxShadow: "0 12px 34px rgba(40,25,15,0.3)" }}>
-          <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 52, color: "#b3261e" }}>{titel}</div>
-          <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 76, lineHeight: 1.1, color: BRAUN, marginTop: 6 }}>{text}</div>
+        <div style={{ background: SAND, borderRadius: 32, padding: "26px 40px 32px", textAlign: "center" }}>
+          <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 50, color: "white", textShadow: SCHATTEN }}>{titel}</div>
+          <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 80, lineHeight: 1.1, color: "white", textShadow: SCHATTEN, marginTop: 6 }}>{text}</div>
         </div>
       </div>
     );
@@ -66,9 +69,9 @@ const Einblendung: React.FC<{ art: "hook" | "karte" | "cta"; titel?: string; tex
   if (art === "karte") {
     return (
       <div style={{ position: "absolute", top: 1080, left: 50, right: 50, ...stil }}>
-        <div style={{ background: CREME, borderRadius: 32, padding: "30px 40px 36px", boxShadow: "0 12px 34px rgba(40,25,15,0.3)" }}>
-          <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 50, color: "#2e7d32" }}>{titel}</div>
-          <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 42, lineHeight: 1.32, color: BRAUN, marginTop: 12 }}>{text}</div>
+        <div style={{ background: SAND, borderRadius: 32, padding: "30px 40px 36px", textAlign: "center" }}>
+          <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 54, color: "white", textShadow: SCHATTEN }}>{titel}</div>
+          <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 44, lineHeight: 1.32, color: "white", textShadow: SCHATTEN, marginTop: 12 }}>{text}</div>
         </div>
       </div>
     );
