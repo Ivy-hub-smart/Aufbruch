@@ -39,18 +39,18 @@ export const HOOK_PROMPT: SprechvideoProps = {
   dauer: 26.3,
   einblendungen: [
     { von: 0, bis: 3.6, art: "hook", titel: "❌ Schreib der KI nie:", text: "«Erstelle mir eine Hook.»" },
+    { von: 3.7, bis: 6.3, art: "untertitel", text: "Da kommt nur Einheitsbrei raus." },
     {
       von: 6.5,
-      bis: 20.7,
+      bis: 15.9,
       art: "karte",
       titel: "✅ Schreib stattdessen:",
-      text: "«Erstelle mir 5 Hooks für ein Reel über [dein Thema]. Für Menschen, die neben dem Job ein 2. Einkommen aufbauen wollen. Jede Hook soll ein Gefühl treffen und höchstens 6 Wörter haben.»",
+      text: "«Erstelle mir 5 Hooks für ein Reel über [dein Thema]. Jede Hook soll ein Gefühl treffen und höchstens 6 Wörter haben.»",
     },
-    { von: 3.7, bis: 6.3, art: "untertitel", text: "Da kommt nur Einheitsbrei raus." },
-    { von: 18.9, bis: 20.8, art: "untertitel", text: "Der Unterschied ist riesig." },
-    { von: 20.9, bis: 23.0, art: "untertitel", text: "Solche KI-Tipps lerne ich gerade." },
-    { von: 23.0, bis: 24.7, art: "untertitel", text: "Willst du auch?" },
-    { von: 20.9, bis: 26.3, art: "cta", text: "Kommentiere START 👇" },
+    { von: 16.0, bis: 18.7, art: "untertitel", text: "Der Unterschied ist riesig." },
+    { von: 18.8, bis: 20.8, art: "untertitel", text: "Solche KI-Tipps lerne ich gerade." },
+    { von: 20.9, bis: 22.6, art: "untertitel", text: "Willst du auch?" },
+    { von: 22.6, bis: 26.3, art: "cta", text: "Kommentiere START 👇" },
   ],
 };
 
