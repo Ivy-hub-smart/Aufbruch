@@ -1,4 +1,4 @@
-import { AbsoluteFill, OffthreadVideo, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Audio, OffthreadVideo, interpolate, staticFile, useCurrentFrame } from "remotion";
 
 // Hellbraun mit dunklerem Rand, cremefarbener Bauch, rosa Ohren innen
 const FELL = "#c9a074";
@@ -81,6 +81,8 @@ export const Hoppelhase: React.FC = () => {
     <AbsoluteFill>
       {/* Wiese, Sonne, Wolken, Gras, Blumen und Schmetterling kommen aus HyperFrames */}
       <OffthreadVideo src={staticFile("hyperframes-wiese.mp4")} muted />
+      {/* fröhliche Melodie, 150 BPM: jede Landung fällt auf den Takt (scripts/hasen-musik.py) */}
+      <Audio src={staticFile("hasen-musik.wav")} />
 
       {/* Schatten am Boden */}
       <div
@@ -110,14 +112,14 @@ export const Hoppelhase: React.FC = () => {
         }}
       >
         <g stroke={RAND} strokeWidth={5} strokeLinejoin="round">
-          {/* grosse Ohren */}
+          {/* riesige Ohren */}
           <g transform={`rotate(${-ohr - zucken} 165 200)`}>
-            <ellipse cx={150} cy={95} rx={40} ry={118} fill={FELL} />
-            <ellipse cx={150} cy={105} rx={20} ry={88} fill={ROSA} stroke="none" />
+            <ellipse cx={148} cy={60} rx={50} ry={155} fill={FELL} />
+            <ellipse cx={148} cy={72} rx={27} ry={120} fill={ROSA} stroke="none" />
           </g>
           <g transform={`rotate(${ohr} 235 200)`}>
-            <ellipse cx={250} cy={95} rx={40} ry={118} fill={FELL} />
-            <ellipse cx={250} cy={105} rx={20} ry={88} fill={ROSA} stroke="none" />
+            <ellipse cx={252} cy={60} rx={50} ry={155} fill={FELL} />
+            <ellipse cx={252} cy={72} rx={27} ry={120} fill={ROSA} stroke="none" />
           </g>
 
           {/* Füsse */}
@@ -158,11 +160,11 @@ export const Hoppelhase: React.FC = () => {
             <path d="M260 300 L318 290 M260 310 L320 314" />
           </g>
 
-          {/* grosse Zähne, darüber Nase und Mund */}
-          <rect x={180} y={300} width={20} height={lachen ? 50 : 44} rx={5} fill="white" strokeWidth={4} />
-          <rect x={200} y={300} width={20} height={lachen ? 50 : 44} rx={5} fill="white" strokeWidth={4} />
+          {/* riesige Zähne, darüber Nase und Mund */}
+          <rect x={170} y={298} width={30} height={lachen ? 74 : 66} rx={7} fill="white" strokeWidth={4} />
+          <rect x={200} y={298} width={30} height={lachen ? 74 : 66} rx={7} fill="white" strokeWidth={4} />
           <path
-            d={lachen ? "M160 292 Q180 312 200 294 Q220 312 240 292" : "M168 294 Q184 308 200 296 Q216 308 232 294"}
+            d={lachen ? "M150 290 Q175 314 200 294 Q225 314 250 290" : "M158 292 Q180 310 200 296 Q220 310 242 292"}
             fill="none"
             strokeWidth={5}
             strokeLinecap="round"

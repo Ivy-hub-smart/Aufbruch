@@ -200,14 +200,15 @@ ffmpeg -i original.mp4 -c:v libvpx-vp9 -i remotion/public/hook-prompt-ich.webm -
 
 ## Video: Hoppelhase
 
-8 Sekunden auf einer Frühlingswiese: ein hellbrauner Hase mit grossen Ohren, grossen
-Zähnen und zwei Armen hoppelt herein, bleibt stehen, blinzelt und winkt, macht einen
+8 Sekunden auf einer Frühlingswiese, für Kinder: ein hellbrauner Hase mit riesigen Ohren,
+riesigen Zähnen und zwei Armen hoppelt herein, bleibt stehen, blinzelt und winkt, macht einen
 Freudensprung mit hochgerissenen Armen und hoppelt rechts wieder hinaus.
 
 | Teil | Tool | Datei |
 |---|---|---|
 | Himmel, Sonne mit Strahlen, Wolken, Hügel, wehendes Gras, Blumen, Schmetterling | HyperFrames | `hyperframes/wiese/index.html` |
 | Hase (SVG), Hoppeln, Ohren, Winken, Freudensprung, Schatten | Remotion | `remotion/src/Hoppelhase.tsx` |
+| Fröhliche Melodie (Ukulele, Glockenspiel, 150 BPM, Landungen im Takt, lizenzfrei) | Python | `remotion/scripts/hasen-musik.py` |
 
 Fertiges Video: `remotion/out/hoppelhase.mp4`
 
