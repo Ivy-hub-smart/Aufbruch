@@ -198,6 +198,25 @@ ffmpeg -i original.mp4 -c:v libvpx-vp9 -i remotion/public/hook-prompt-ich.webm -
   -an remotion/public/hook-prompt-portrait.mp4
 ```
 
+## Video: Hoppelhase
+
+8 Sekunden auf einer Frühlingswiese: ein hellbrauner Hase mit grossen Ohren, grossen
+Zähnen und zwei Armen hoppelt herein, bleibt stehen, blinzelt und winkt, macht einen
+Freudensprung mit hochgerissenen Armen und hoppelt rechts wieder hinaus.
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Himmel, Sonne mit Strahlen, Wolken, Hügel, wehendes Gras, Blumen, Schmetterling | HyperFrames | `hyperframes/wiese/index.html` |
+| Hase (SVG), Hoppeln, Ohren, Winken, Freudensprung, Schatten | Remotion | `remotion/src/Hoppelhase.tsx` |
+
+Fertiges Video: `remotion/out/hoppelhase.mp4`
+
+```bash
+npm run render:wiese && npm run render:hoppelhase
+```
+
+Farben des Hasen oben in `Hoppelhase.tsx` (`FELL`, `FELL_DUNKEL`, `CREME`, `ROSA`).
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.

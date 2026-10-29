@@ -24,6 +24,8 @@
     "render:gedanken": "cd remotion && for i in 1 2 3 4 5 6; do npx remotion render Gedanke$i out/gedanke-$i.mp4 || exit 1; done",
     "render:vorstellung": "cd remotion && for i in 1 2 3 4; do npx remotion still Vorstellung$i out/vorstellung-$i.png || exit 1; done",
     "render:pdf-stories": "cd remotion && for i in 1 2; do npx remotion still PdfStory$i out/pdf-story-$i.png || exit 1; done",
+    "render:wiese": "cd hyperframes/wiese && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wiese.mp4",
+    "render:hoppelhase": "cd remotion && npx remotion render Hoppelhase out/hoppelhase.mp4",
     "render:hook-prompt": "cd remotion && npx remotion render HookPrompt out/hook-prompt.mp4"
   }
 }

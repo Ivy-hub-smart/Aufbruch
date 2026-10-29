@@ -11,6 +11,7 @@ import { GEDANKEN, Gedanke, gedankeDauer, gedankeSchema } from "./Gedanke";
 import { PDF_STORIES, VORSTELLUNG, Vorstellung, vorstellungSchema } from "./Vorstellung";
 import { HOOK_PROMPT, Sprechvideo, sprechvideoSchema } from "./Sprechvideo";
 import { STORIES, Story, storySchema } from "./Story";
+import { Hoppelhase } from "./Hoppelhase";
 import { FOLGE_MIR, FolgeMir, folgeMirDauer, folgeMirSchema } from "./FolgeMir";
 
 export const RemotionRoot: React.FC = () => (
@@ -139,6 +140,14 @@ export const RemotionRoot: React.FC = () => (
     width={1080}
     height={1920}
     defaultProps={HOOK_PROMPT}
+  />
+  <Composition
+    id="Hoppelhase"
+    component={Hoppelhase}
+    durationInFrames={240} // 8 Sekunden bei 30 fps
+    fps={30}
+    width={1080}
+    height={1920}
   />
   </>
 );
