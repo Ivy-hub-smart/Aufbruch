@@ -179,6 +179,13 @@ Texte in `remotion/src/Vorstellung.tsx`, Bilder `remotion/out/vorstellung-1.png`
 (`remotion/out/gedanke-4.mp4` bis `-6.mp4`) und zwei Story-Bilder mit Platz für den
 Link-Sticker (`remotion/out/pdf-story-1.png`, `-2.png`, `npm run render:pdf-stories`).
 
+## Reel „Schreib der KI nie…“ (ich spreche in die Kamera)
+
+26 Sekunden aus meinem Laptop-Video: oben ❌ «Erstelle mir eine Hook.», ab „Schreib stattdessen“
+unten der bessere Prompt als ✅-Karte, am Schluss „Kommentiere START 👇“. Stimme aufbereitet,
+leises Klavier darunter. Vorlage `remotion/src/Sprechvideo.tsx` (`HOOK_PROMPT`, Zeiten in Sekunden),
+Video `remotion/out/hook-prompt.mp4`.
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
