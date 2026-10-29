@@ -12,6 +12,7 @@ import { PDF_STORIES, VORSTELLUNG, Vorstellung, vorstellungSchema } from "./Vors
 import { HOOK_PROMPT, Sprechvideo, sprechvideoSchema } from "./Sprechvideo";
 import { STORIES, Story, storySchema } from "./Story";
 import { Hoppelhase } from "./Hoppelhase";
+import { Hoppelhase3D } from "./Hoppelhase3D";
 import { FOLGE_MIR, FolgeMir, folgeMirDauer, folgeMirSchema } from "./FolgeMir";
 
 export const RemotionRoot: React.FC = () => (
@@ -145,6 +146,14 @@ export const RemotionRoot: React.FC = () => (
     id="Hoppelhase"
     component={Hoppelhase}
     durationInFrames={240} // 8 Sekunden bei 30 fps
+    fps={30}
+    width={1080}
+    height={1920}
+  />
+  <Composition
+    id="Hoppelhase3D"
+    component={Hoppelhase3D}
+    durationInFrames={300} // 10 Sekunden bei 30 fps
     fps={30}
     width={1080}
     height={1920}

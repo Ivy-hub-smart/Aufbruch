@@ -1,6 +1,7 @@
 """Fröhliche Kinder-Melodie für den Hoppelhasen (eigene Synthese, lizenzfrei).
 
-python3 hasen-musik.py public/hasen-musik.wav
+python3 hasen-musik.py public/hasen-musik.wav          # 8 s, 2D-Hase
+python3 hasen-musik.py public/hasen-3d-musik.wav 10    # 10 s, 3D-Hase im Gartenstuhl
 
 150 BPM: 1 Schlag = 12 Frames, jeder Hasen-Hopser (24 Frames) dauert 2 Schläge,
 die Landungen fallen also auf den Takt. Ukulele, Glockenspiel-Melodie, Bass, Shaker.
@@ -11,7 +12,7 @@ import wave
 import numpy as np
 
 SR = 44100
-DUR = 8.0
+DUR = float(sys.argv[2]) if len(sys.argv) > 2 else 8.0
 n = int(SR * DUR)
 rng = np.random.default_rng(1111)
 BPM = 150.0
@@ -80,6 +81,11 @@ MELODIE = [
     [72, 76, 79, 84, 79, 76, 72, None],
     [84, None, None, None, None, None, None, None],
 ]
+if DUR > 8:
+    # zwei Takte mehr vor dem Schluss: F – G
+    CHORDS[4:4] = [[60, 65, 69, 72], [59, 62, 67, 71]]
+    ROOTS[4:4] = [41, 43]
+    MELODIE[4:4] = [[81, 79, 77, None, 77, 76, 74, None], [74, None, 79, None, 77, 74, 71, 74]]
 
 for bar, chord in enumerate(CHORDS):
     t0 = bar * 4 * beat

@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #8cc8f0; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      /* Himmel hinter der 3D-Szene, der Garten kommt aus Three.js */
+      #himmel { background: linear-gradient(180deg, #5fa8e6 0%, #9fd0f2 40%, #e3f2fb 62%); }
+      #szene { display: block; width: 1080px; height: 1920px; }
+    </style>
+    <script>
+      // Three.js lädt als Modul: der Renderer wartet, bis alles aufgebaut ist
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["hase"] = new Promise((fertig) => { window.__haseFertig = fertig; });
+    </script>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div id="himmel" class="clip layer" data-start="0" data-duration="10" data-track-index="0"></div>
+      <canvas id="szene" class="clip layer" data-start="0" data-duration="10" data-track-index="1" width="1080" height="1920"></canvas>
+    </div>
+    <script type="module">
+      import * as THREE from "./assets/three.module.js";
+
+      // ---------- Werkzeuge ----------
+      let seed = 1111;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a)); return x * x * (3 - 2 * x); };
+      const lerp = (a, b, x) => a + (b - a) * x;
+      const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+      // Keyframes [[t, wert], ...] mit weichen Übergängen
+      const kf = (keys, t) => {
+        if (t <= keys[0][0]) return keys[0][1];
+        for (let i = 1; i < keys.length; i++) {
+          if (t <= keys[i][0]) {
+            const [t0, a] = keys[i - 1], [t1, b] = keys[i];
+            const x = smooth(t0, t1, t);
+            return Array.isArray(a) ? a.map((ai, k) => lerp(ai, b[k], x)) : lerp(a, b, x);
+          }
+        }
+        return keys[keys.length - 1][1];
+      };
+
+      const canvas = document.getElementById("szene");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(1);
+      renderer.setSize(1080, 1920, false);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(30, 1080 / 1920, 0.1, 60);
+
+      // ---------- Licht: warme Sonne, kühler Himmel, Gegenlicht ----------
+      const SONNE = v3(0.55, 0.75, 0.6).normalize();
+      const sonne = new THREE.DirectionalLight(0xfff0d8, 2.6);
+      sonne.position.copy(SONNE).multiplyScalar(8);
+      sonne.castShadow = true;
+      sonne.shadow.mapSize.set(2048, 2048);
+      Object.assign(sonne.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 1, far: 20 });
+      sonne.shadow.bias = -0.0005;
+      sonne.shadow.radius = 4;
+      scene.add(sonne);
+      scene.add(new THREE.HemisphereLight(0xbfdcff, 0x5d6b33, 1.1));
+
+      // ---------- Fell (Schalen-Technik: viele leicht grössere Hüllen mit Haar-Mustern) ----------
+      const SCHALEN = 24;
+      const FELL_VS = `
+        uniform float uH; uniform float uLen;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+        void main() {
+          vUv = uv;
+          vec3 p = position + normal * uLen * uH;
+          vec4 w = modelMatrix * vec4(p, 1.0);
+          w.y -= uLen * uH * uH * 0.5; // Haare hängen leicht nach unten
+          vW = w.xyz;
+          vN = normalize(mat3(modelMatrix) * normal);
+          gl_Position = projectionMatrix * viewMatrix * w;
+        }`;
+      const FELL_FS = `
+        uniform float uH; uniform vec3 uColor; uniform vec3 uTip; uniform vec2 uDens;
+        uniform vec3 uSun; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uRim;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        void main() {
+          vec2 g = vUv * uDens;
+          vec2 c = floor(g);
+          vec2 f = fract(g) - 0.5;
+          float r = hash(c);
+          vec2 off = vec2(hash(c + 3.1), hash(c + 7.7)) - 0.5;
+          float d = length(f - off * 0.4);
+          float len = 0.55 + 0.45 * r;
+          if (uH > 0.0 && (uH > len || d > 0.62 * pow(1.0 - uH / len, 0.8))) discard;
+          vec3 N = normalize(vN);
+          vec3 V = normalize(cameraPosition - vW);
+          float wrap = clamp((dot(N, uSun) + 0.45) / 1.45, 0.0, 1.0);
+          float ao = mix(0.45, 1.0, pow(uH, 0.7));
+          vec3 base = mix(uColor, uTip, uH * uH) * (0.82 + 0.36 * r);
+          vec3 hemi = mix(uGround, uSky, N.y * 0.5 + 0.5);
+          vec3 col = base * (uSunCol * wrap + hemi) * ao;
+          float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0);
+          col += uRim * rim * uH * base * 2.0;
+          vec3 Hh = normalize(uSun + V);
+          col += uSunCol * 0.06 * pow(max(dot(N, Hh), 0.0), 16.0) * uH;
+          gl_FragColor = vec4(col, 1.0);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`;
+      const LICHT = {
+        uSun: { value: SONNE },
+        uSunCol: { value: new THREE.Color(1.0, 0.9, 0.76).multiplyScalar(2.3) },
+        uSky: { value: new THREE.Color(0.42, 0.52, 0.7).multiplyScalar(0.75) },
+        uGround: { value: new THREE.Color(0.3, 0.32, 0.16).multiplyScalar(0.6) },
+        uRim: { value: new THREE.Color(1.0, 0.92, 0.8).multiplyScalar(0.6) },
+      };
+      const fellMats = new Map();
+      const fellMaterialien = (farbe, spitze, laenge, dichte) => {
+        const key = [farbe, spitze, laenge, dichte.join()].join("|");
+        if (fellMats.has(key)) return fellMats.get(key);
+        const mats = [];
+        for (let i = 0; i <= SCHALEN; i++) {
+          mats.push(new THREE.ShaderMaterial({
+            vertexShader: FELL_VS,
+            fragmentShader: FELL_FS,
+            uniforms: {
+              uH: { value: i / SCHALEN }, uLen: { value: laenge },
+              uColor: { value: new THREE.Color(farbe) }, uTip: { value: new THREE.Color(spitze) },
+              uDens: { value: new THREE.Vector2(...dichte) }, ...LICHT,
+            },
+          }));
+        }
+        fellMats.set(key, mats);
+        return mats;
+      };
+      // Ellipsoid mit Fell; Dichte richtet sich nach der Grösse, damit die Haare überall gleich fein sind
+      const fellKugel = (rx, ry, rz, farbe, spitze, laenge = 0.018, seg = 40, polSeitlich = false) => {
+        const geo = new THREE.SphereGeometry(1, seg, Math.round(seg * 0.75));
+        if (polSeitlich) geo.rotateZ(Math.PI / 2);
+        geo.scale(rx, ry, rz);
+        geo.computeVertexNormals();
+        const umfang = Math.PI * (rx + rz), hoch = Math.PI * ry;
+        const mats = fellMaterialien(farbe, spitze, laenge, [Math.round(umfang * 380), Math.round(hoch * 190)]);
+        const g = new THREE.Group();
+        mats.forEach((m, i) => {
+          const mesh = new THREE.Mesh(geo, m);
+          mesh.renderOrder = i;
+          if (i === 0) mesh.castShadow = true;
+          g.add(mesh);
+        });
+        return g;
+      };
+      const at = (obj, x, y, z, rx = 0, ry = 0, rz = 0) => { obj.position.set(x, y, z); obj.rotation.set(rx, ry, rz); return obj; };
+
+      // ---------- Holz ----------
+      const holzTextur = (hell, dunkel) => {
+        const c = document.createElement("canvas");
+        c.width = 256; c.height = 512;
+        const x = c.getContext("2d");
+        x.fillStyle = hell; x.fillRect(0, 0, 256, 512);
+        for (let i = 0; i < 70; i++) {
+          x.strokeStyle = dunkel; x.globalAlpha = 0.08 + rnd() * 0.18; x.lineWidth = 1 + rnd() * 3;
+          const px = rnd() * 256;
+          x.beginPath(); x.moveTo(px, 0);
+          for (let y = 0; y <= 512; y += 32) x.lineTo(px + Math.sin(y / 60 + i) * 4, y);
+          x.stroke();
+        }
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        return t;
+      };
+      const holz = new THREE.MeshStandardMaterial({ map: holzTextur("#b88a5a", "#6e4a2a"), roughness: 0.75 });
+      const zaunHolz = new THREE.MeshStandardMaterial({ map: holzTextur("#d9b98c", "#8a6a45"), roughness: 0.85 });
+      const brett = (w, h, d, mat = holz) => {
+        const geo = new THREE.BoxGeometry(w, h, d);
+        const m = new THREE.Mesh(geo, mat);
+        m.castShadow = true; m.receiveShadow = true;
+        return m;
+      };
+
+      // ---------- Rasen ----------
+      const rasenTextur = () => {
+        const c = document.createElement("canvas");
+        c.width = c.height = 512;
+        const x = c.getContext("2d");
+        x.fillStyle = "#5f9a34"; x.fillRect(0, 0, 512, 512);
+        const farben = ["#4e8a2a", "#6fae3e", "#7dbb48", "#457d24", "#89c552"];
+        for (let i = 0; i < 9000; i++) {
+          x.strokeStyle = farben[i % 5]; x.globalAlpha = 0.5 + rnd() * 0.5; x.lineWidth = 1 + rnd() * 1.5;
+          const px = rnd() * 512, py = rnd() * 512, l = 4 + rnd() * 9, a = -Math.PI / 2 + (rnd() - 0.5) * 0.9;
+          x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke();
+        }
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(14, 14);
+        t.anisotropy = 8;
+        return t;
+      };
+      const rasen = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ map: rasenTextur(), roughness: 0.95 }));
+      rasen.rotation.x = -Math.PI / 2;
+      rasen.receiveShadow = true;
+      scene.add(rasen);
+
+      // ---------- Zaun und unscharfe Bäume dahinter ----------
+      const zaun = new THREE.Group();
+      for (let x = -5; x <= 5; x += 0.17) {
+        const latte = brett(0.13, 1.05, 0.03, zaunHolz);
+        latte.position.set(x, 0.525, 0);
+        const spitze = brett(0.092, 0.092, 0.03, zaunHolz);
+        spitze.position.set(x, 1.05, 0); spitze.rotation.z = Math.PI / 4;
+        zaun.add(latte, spitze);
+      }
+      for (const y of [0.25, 0.8]) { const r = brett(10.2, 0.09, 0.03, zaunHolz); r.position.set(0, y, -0.03); zaun.add(r); }
+      zaun.position.z = -3.2;
+      scene.add(zaun);
+
+      const baumTextur = () => {
+        const c = document.createElement("canvas");
+        c.width = 1024; c.height = 512;
+        const x = c.getContext("2d");
+        x.filter = "blur(14px)";
+        const gruen = ["#2f6b2a", "#3f8034", "#4c9440", "#5aa24a", "#2a5e25", "#6db357"];
+        for (let i = 0; i < 160; i++) {
+          x.fillStyle = gruen[i % 6]; x.globalAlpha = 0.9;
+          const px = rnd() * 1024, py = 140 + rnd() * 380, r = 40 + rnd() * 90;
+          x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill();
+        }
+        x.fillStyle = "#2a5a22"; x.globalAlpha = 1; x.fillRect(0, 430, 1024, 82);
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      };
+      const baeume = new THREE.Mesh(new THREE.PlaneGeometry(22, 5), new THREE.MeshBasicMaterial({ map: baumTextur(), transparent: true, toneMapped: true }));
+      baeume.material.color.setRGB(0.82, 0.9, 0.82);
+      baeume.position.set(0, 1.55, -7);
+      scene.add(baeume);
+
+      // ---------- Adirondack-Gartenstuhl ----------
+      const stuhl = new THREE.Group();
+      const sitz = new THREE.Group();
+      for (let i = 0; i < 6; i++) { const b = brett(0.66, 0.025, 0.07); b.position.set(0, 0, -0.22 + i * 0.085); sitz.add(b); }
+      sitz.position.set(0, 0.36, 0.02); sitz.rotation.x = -0.12;
+      const lehne = new THREE.Group();
+      for (let i = 0; i < 5; i++) {
+        const x = (i - 2) * 0.125, h = 0.95 - Math.abs(i - 2) * 0.08;
+        const b = brett(0.105, h, 0.022); b.position.set(x, h / 2, 0); b.rotation.z = -x * 0.25;
+        lehne.add(b);
+      }
+      for (const y of [0.18, 0.62]) { const q = brett(0.68, 0.06, 0.03); q.position.set(0, y, -0.025); lehne.add(q); }
+      lehne.position.set(0, 0.33, -0.28); lehne.rotation.x = -0.32;
+      stuhl.add(sitz, lehne);
+      for (const s of [-1, 1]) {
+        const arm = brett(0.15, 0.025, 0.78); arm.position.set(s * 0.41, 0.62, 0.02); stuhl.add(arm);
+        const vb = brett(0.06, 0.62, 0.07); vb.position.set(s * 0.37, 0.31, 0.3); stuhl.add(vb);
+        const hb = brett(0.06, 0.08, 0.95); hb.position.set(s * 0.35, 0.3, -0.05); hb.rotation.x = -0.3; stuhl.add(hb);
+        const st = brett(0.05, 0.3, 0.05); st.position.set(s * 0.4, 0.47, -0.3); stuhl.add(st);
+      }
+      scene.add(stuhl);
+
+      // Tischchen links neben dem Stuhl
+      const tisch = new THREE.Group();
+      for (let i = 0; i < 4; i++) { const b = brett(0.1, 0.025, 0.46); b.position.set(-0.17 + i * 0.113, 0.52, 0); tisch.add(b); }
+      for (const [x, z] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) { const b = brett(0.045, 0.52, 0.045); b.position.set(x, 0.26, z); tisch.add(b); }
+      tisch.position.set(-0.78, 0, 0.08);
+      scene.add(tisch);
+      const TISCH_OBEN = v3(-0.72, 0.533, 0.12);
+
+      // ---------- Teetasse ----------
+      const tasse = new THREE.Group();
+      const porzellan = new THREE.MeshPhysicalMaterial({ color: 0xfbf7ee, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.15 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xd4a84a, metalness: 1, roughness: 0.35 });
+      const profil = [[0.0, 0], [0.028, 0], [0.032, 0.006], [0.05, 0.03], [0.058, 0.06], [0.06, 0.068], [0.054, 0.068], [0.051, 0.06], [0.043, 0.03], [0.0, 0.012]].map(([x, y]) => new THREE.Vector2(x, y));
+      const becher = new THREE.Mesh(new THREE.LatheGeometry(profil, 40), porzellan);
+      becher.material.side = THREE.DoubleSide; becher.castShadow = true;
+      const rand = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.0035, 8, 48), gold);
+      rand.rotation.x = Math.PI / 2; rand.position.y = 0.067;
+      const henkel = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.005, 8, 24, Math.PI * 1.3), porzellan);
+      henkel.position.set(0.058, 0.04, 0); henkel.rotation.z = -Math.PI * 0.65;
+      const tee = new THREE.Mesh(new THREE.CircleGeometry(0.05, 32), new THREE.MeshStandardMaterial({ color: 0x8a4a1c, roughness: 0.15 }));
+      tee.rotation.x = -Math.PI / 2; tee.position.y = 0.055;
+      tasse.add(becher, rand, henkel, tee);
+      scene.add(tasse);
+
+      // ---------- Der Hase ----------
+      const FELL = "#a86e38", FELL_SPITZE = "#d69c62", CREME = "#e9d2b0", CREME_SPITZE = "#fbf0dc", DUNKEL = "#7a5232";
+      const hase = new THREE.Group();      // Position im Garten
+      const koerper = new THREE.Group();   // Rumpf (wird beim Landen gestaucht)
+      hase.add(koerper);
+      scene.add(hase);
+
+      const rumpf = at(fellKugel(0.26, 0.3, 0.23, FELL, FELL_SPITZE, 0.024), 0, 0.33, 0);
+      const bauch = at(fellKugel(0.16, 0.22, 0.1, CREME, CREME_SPITZE, 0.02), 0, 0.31, 0.155);
+      const schwanz = at(fellKugel(0.08, 0.08, 0.08, CREME, "#ffffff", 0.04, 24), 0, 0.15, -0.23);
+      koerper.add(rumpf, bauch, schwanz);
+
+      // Kopf
+      const kopf = new THREE.Group();
+      kopf.position.set(0, 0.66, 0.03);
+      koerper.add(kopf);
+      const schaedel = at(fellKugel(0.24, 0.205, 0.2, FELL, FELL_SPITZE, 0.018), 0, 0.1, 0);
+      const backeL = at(fellKugel(0.09, 0.07, 0.07, CREME, CREME_SPITZE, 0.009, 28, true), -0.068, 0.04, 0.155);
+      const backeR = at(fellKugel(0.09, 0.07, 0.07, CREME, CREME_SPITZE, 0.009, 28, true), 0.068, 0.04, 0.155);
+      const kinn = at(fellKugel(0.08, 0.05, 0.07, CREME, CREME_SPITZE, 0.012, 24, true), 0, -0.04, 0.12);
+      kopf.add(schaedel, backeL, backeR, kinn);
+
+      const glanz = (farbe, rauh = 0.25) => new THREE.MeshPhysicalMaterial({ color: farbe, roughness: rauh, clearcoat: 1, clearcoatRoughness: 0.1 });
+      const nase = at(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), glanz(0x5b3434, 0.3)), 0, 0.09, 0.225);
+      nase.scale.set(0.036, 0.025, 0.022);
+      kopf.add(nase);
+
+      // offenes Grinsen mit zwei riesigen Zähnen
+      const mund = at(new THREE.Mesh(new THREE.SphereGeometry(1, 28, 16), new THREE.MeshStandardMaterial({ color: 0x4a1f1a, roughness: 0.6 })), 0, -0.01, 0.185);
+      mund.scale.set(0.1, 0.045, 0.03);
+      kopf.add(mund);
+      const zahnGeo = new THREE.CapsuleGeometry(0.027, 0.075, 6, 16);
+      zahnGeo.scale(1, 1, 0.45);
+      const zahnMat = new THREE.MeshPhysicalMaterial({ color: 0xfffaf0, emissive: 0x5a5448, roughness: 0.3, clearcoat: 0.6 });
+      const zahnL = at(new THREE.Mesh(zahnGeo, zahnMat), -0.026, 0.0, 0.212, 0.12, 0, 0.04);
+      const zahnR = at(new THREE.Mesh(zahnGeo, zahnMat), 0.026, 0.0, 0.212, 0.12, 0, -0.04);
+      kopf.add(zahnL, zahnR);
+      const lippe = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3([v3(-0.14, 0.075, 0.13), v3(-0.11, 0.01, 0.18), v3(-0.05, -0.045, 0.2), v3(0, -0.055, 0.205), v3(0.05, -0.045, 0.2), v3(0.11, 0.01, 0.18), v3(0.14, 0.075, 0.13)]), 60, 0.008, 8),
+        new THREE.MeshStandardMaterial({ color: 0x4a2a20 }));
+      kopf.add(lippe);
+      // Schnurrhaare
+      const schnurrMat = new THREE.LineBasicMaterial({ color: 0x3a2a20 });
+      for (const s of [-1, 1]) for (const k of [0, 1, 2]) {
+        const g = new THREE.BufferGeometry().setFromPoints([v3(s * 0.1, 0.05 - k * 0.018, 0.17), v3(s * 0.24, 0.08 - k * 0.04, 0.12)]);
+        kopf.add(new THREE.Line(g, schnurrMat));
+      }
+
+      // grosse Augen mit Lidern (halb geschlossen = verschmitzt wie Duke)
+      const augen = [];
+      for (const s of [-1, 1]) {
+        const auge = new THREE.Group();
+        auge.position.set(s * 0.088, 0.16, 0.15);
+        auge.rotation.y = s * 0.18;
+        const apfel = new THREE.Mesh(new THREE.SphereGeometry(0.058, 32, 24), glanz(0xfdfbf6, 0.15));
+        const iris = new THREE.Mesh(new THREE.SphereGeometry(0.029, 32, 24), glanz(0x7a4a1a, 0.2));
+        iris.position.z = 0.046; iris.scale.z = 0.5;
+        const pupille = new THREE.Mesh(new THREE.SphereGeometry(0.016, 24, 16), glanz(0x120a06, 0.1));
+        pupille.position.z = 0.056; pupille.scale.z = 0.45;
+        const licht = new THREE.Mesh(new THREE.SphereGeometry(0.008, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        licht.position.set(0.012, 0.014, 0.062);
+        const blick = new THREE.Group();
+        blick.add(iris, pupille, licht);
+        const lid = new THREE.Group();
+        const lidSchale = new THREE.Mesh(new THREE.SphereGeometry(0.062, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xa86c38, roughness: 0.85 }));
+        lid.add(lidSchale);
+        const braue = at(new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.07, 4, 10), new THREE.MeshStandardMaterial({ color: 0x5a3820, roughness: 0.9 })), s * 0.005, 0.085, 0.02, 0, 0, Math.PI / 2 - s * 0.22);
+        auge.add(apfel, blick, lid, braue);
+        kopf.add(auge);
+        augen.push({ auge, blick, lid, braue, s });
+      }
+
+      // riesige Ohren
+      const ohren = [];
+      for (const s of [-1, 1]) {
+        const ohr = new THREE.Group();
+        ohr.position.set(s * 0.09, 0.28, -0.02);
+        const aussen = at(fellKugel(0.08, 0.28, 0.035, FELL, FELL_SPITZE, 0.012, 32), 0, 0.25, 0);
+        const innen = at(fellKugel(0.045, 0.22, 0.012, "#e7a49a", "#f6c6bd", 0.006, 28), 0, 0.24, 0.026);
+        ohr.add(aussen, innen);
+        kopf.add(ohr);
+        ohren.push({ ohr, s });
+      }
+
+      // Beine: Oberschenkel und lange Hasenfüsse
+      const beine = [];
+      for (const s of [-1, 1]) {
+        const schenkel = at(fellKugel(0.13, 0.12, 0.17, FELL, FELL_SPITZE, 0.02, 32, true), s * 0.16, 0.13, 0.08);
+        const fuss = new THREE.Group();
+        const fussFell = at(fellKugel(0.065, 0.05, 0.16, FELL, FELL_SPITZE, 0.014, 32, true), 0, 0, 0.1);
+        const sohle = at(fellKugel(0.052, 0.022, 0.135, CREME, CREME_SPITZE, 0.01, 24, true), 0, -0.032, 0.1);
+        fuss.add(fussFell, sohle);
+        koerper.add(schenkel, fuss);
+        beine.push({ schenkel, fuss, s });
+      }
+
+      // Arme: Oberarm und Unterarm, gesteuert über die Pfoten-Position (IK)
+      const OBERARM = 0.17, UNTERARM = 0.17;
+      const arme = [];
+      for (const s of [-1, 1]) {
+        const schulter = new THREE.Group();
+        schulter.position.set(s * 0.23, 0.52, 0.08);
+        const ober = new THREE.Group();
+        ober.add(at(fellKugel(0.055, 0.11, 0.055, FELL, FELL_SPITZE, 0.016, 24, true), 0, -0.08, 0));
+        const unter = new THREE.Group();
+        unter.position.y = -OBERARM;
+        unter.add(at(fellKugel(0.048, 0.105, 0.048, FELL, FELL_SPITZE, 0.014, 24, true), 0, -0.08, 0));
+        const pfote = at(fellKugel(0.045, 0.04, 0.045, "#8a6040", "#b08060", 0.012, 20), 0, -UNTERARM, 0.005);
+        unter.add(pfote);
+        ober.add(unter);
+        schulter.add(ober);
+        koerper.add(schulter);
+        arme.push({ schulter, ober, unter, pfote, s });
+      }
+      const AB = v3(0, -1, 0);
+      const q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
+      // Zwei-Knochen-IK: Pfote zum Ziel (in Rumpf-Koordinaten), Ellbogen zeigt nach aussen/unten
+      const greife = (arm, ziel) => {
+        const S = arm.schulter.position;
+        const d = ziel.clone().sub(S);
+        const L = clamp(d.length(), 0.05, OBERARM + UNTERARM - 0.001);
+        d.normalize();
+        const a = Math.acos(clamp((OBERARM * OBERARM + L * L - UNTERARM * UNTERARM) / (2 * OBERARM * L), -1, 1));
+        const pol = v3(arm.s * 0.8, -0.6, -0.4).normalize();
+        const achse = new THREE.Vector3().crossVectors(d, pol).normalize();
+        const oberRicht = d.clone().applyAxisAngle(achse, -a);
+        const ellbogen = S.clone().addScaledVector(oberRicht, OBERARM);
+        const unterRicht = ziel.clone().sub(ellbogen).normalize();
+        q1.setFromUnitVectors(AB, oberRicht);
+        arm.ober.quaternion.copy(q1);
+        q2.setFromUnitVectors(AB, unterRicht);
+        arm.unter.quaternion.copy(q1.clone().invert().multiply(q2));
+      };
+
+      // ---------- Ablauf (Sekunden) ----------
+      // 0–3.9 sitzt im Stuhl und trinkt Tee, 4.0–4.8 springt auf den Rasen,
+      // 4.8–7.2 drei Hopser (je 0.8 s, Landung im Takt), 7.6–8.4 Freudensprung, danach Winken
+      const SITZ = v3(0, 0.375, -0.02);
+      const HOPPS = [
+        { von: 4.0, bis: 4.8, a: SITZ, b: v3(0.08, 0, 0.75), hoehe: 0.35, dreh: [0, 0] },
+        { von: 4.8, bis: 5.6, a: v3(0.08, 0, 0.75), b: v3(0.32, 0, 1.25), hoehe: 0.28, dreh: [0, 0.35] },
+        { von: 5.6, bis: 6.4, a: v3(0.32, 0, 1.25), b: v3(0.1, 0, 1.55), hoehe: 0.28, dreh: [0.35, -0.3] },
+        { von: 6.4, bis: 7.2, a: v3(0.1, 0, 1.55), b: v3(0.12, 0, 1.75), hoehe: 0.24, dreh: [-0.3, 0] },
+        { von: 7.6, bis: 8.4, a: v3(0.12, 0, 1.75), b: v3(0.12, 0, 1.75), hoehe: 0.55, dreh: [0, 0] },
+      ];
+      const TASSE_HAND = v3(-0.17, 0.4, 0.33);  // Pfote hält die Tasse vor dem Bauch (Rumpf-Koordinaten)
+      const TASSE_MUND = v3(-0.03, 0.58, 0.32);
+
+      const pose = (t) => {
+        // Grundwerte: sitzend
+        let pos = SITZ.clone(), drehY = 0, neig = -0.12, luft = 0, steigt = 0, bodenK = 0, stehen = 0, freude = 0;
+        for (const h of HOPPS) {
+          if (t >= h.von && t < h.bis) {
+            const p = (t - h.von) / (h.bis - h.von);
+            pos = h.a.clone().lerp(h.b, p);
+            pos.y += Math.sin(Math.PI * p) * h.hoehe;
+            luft = Math.sin(Math.PI * p); steigt = Math.cos(Math.PI * p);
+            drehY = lerp(h.dreh[0], h.dreh[1], smooth(0, 1, p));
+            if (h.von === 7.6) freude = luft;
+          }
+        }
+        if (t >= 7.2) pos = HOPPS[3].b.clone().setY(t >= 7.6 && t < 8.4 ? pos.y : 0);
+        if (t >= 4.0) stehen = smooth(4.0, 4.35, t);
+        // kurz vor dem Absprung aus dem Stuhl in die Hocke
+        const hocke = smooth(3.7, 3.95, t) * (1 - smooth(3.95, 4.05, t));
+        // Bodenkontakt: Stauchen kurz nach jeder Landung
+        for (const h of HOPPS) bodenK = Math.max(bodenK, Math.max(0, 1 - Math.abs(t - h.bis) / 0.1) * (t > h.bis - 0.04 ? 1 : 0.4));
+        bodenK = Math.max(bodenK, hocke);
+        neig = lerp(-0.12, 0.05, stehen) + luft * steigt * 0.12;
+        return { pos, drehY, neig, luft, steigt, bodenK, stehen, freude };
+      };
+
+      const renderAt = (t) => {
+        const P = pose(t);
+        hase.position.copy(P.pos);
+        hase.rotation.y = P.drehY;
+        koerper.rotation.x = P.neig;
+        const atmen = Math.sin(t * 2.4) * 0.012 * (1 - P.luft);
+        koerper.scale.set(1 + P.bodenK * 0.07 - P.luft * 0.02, 1 - P.bodenK * 0.1 + P.luft * 0.05 + atmen, 1 + P.bodenK * 0.05);
+
+        // Beine: sitzend nach vorn mit hochgestellten Füssen, stehend unter dem Körper
+        for (const b of beine) {
+          const st = P.stehen, lu = P.luft;
+          b.schenkel.position.set(b.s * lerp(0.15, 0.15, st), lerp(0.1, 0.13, st), lerp(0.17, 0.04, st));
+          b.schenkel.rotation.set(lerp(-0.25, 0.1, st), 0, 0);
+          const wipp = Math.sin(t * 3.1 + b.s) * 0.08 * (1 - st);
+          b.fuss.position.set(b.s * lerp(0.17, 0.14, st), lerp(0.03, 0.035, st) - lu * 0.06, lerp(0.33, 0.05, st) - lu * 0.12);
+          b.fuss.rotation.set(lerp(-1.05 + wipp, 0, st) + lu * 0.7, b.s * lerp(0.25, 0.08, st), 0);
+        }
+
+        // Kopf: leicht schief, schaut in die Kamera, beim Trinken zurück
+        const schluck = smooth(1.1, 1.7, t) * (1 - smooth(2.3, 2.8, t));
+        kopf.rotation.set(-0.06 - schluck * 0.22 + P.luft * P.steigt * 0.1, Math.sin(t * 0.9) * 0.06, lerp(0.09, -0.04, smooth(3, 3.6, t)) + Math.sin(t * 1.3) * 0.03);
+
+        // Augen: verschmitzt halb zu, blinzeln, beim Trinken genüsslich zu, beim Freudensprung weit auf
+        const blinzeln = [0.7, 3.25, 6.0, 9.1].some((b) => t >= b && t < b + 0.14);
+        const genuss = schluck;
+        const weit = Math.max(smooth(3.0, 3.4, t) * (1 - smooth(3.7, 4.0, t)), P.freude, smooth(4.0, 4.3, t) * 0.6);
+        for (const a of augen) {
+          let zu = lerp(0.45, 0.2, weit);
+          zu = Math.max(zu, genuss * 0.97);
+          if (blinzeln) zu = 1;
+          a.lid.rotation.x = lerp(-1.0, 1.55, zu);
+          a.blick.rotation.set(0.04, -a.s * 0.14, 0);
+          a.braue.position.y = 0.08 + weit * 0.02 - genuss * 0.01;
+          a.braue.rotation.z = Math.PI / 2 - a.s * (0.22 + weit * 0.12);
+        }
+        // Grinsen: Mund öffnet sich beim Lachen weiter
+        const lachen = Math.max(weit, P.freude);
+        mund.scale.y = 0.04 + lachen * 0.02;
+
+        // Ohren: wackeln im Sitzen, schwingen beim Hoppeln nach
+        for (const o of ohren) {
+          const zucken = o.s > 0 ? Math.max(0, Math.sin((t - 2.9) * 14)) * 0.25 * (t > 2.9 && t < 3.35 ? 1 : 0) : 0;
+          o.ohr.rotation.set(-0.15 + P.luft * P.steigt * 0.6 + Math.sin(t * 1.7 + o.s) * 0.05, 0, -o.s * (0.22 + P.luft * P.steigt * 0.25 + Math.sin(t * 2.1) * 0.03) - zucken);
+        }
+
+        // Arme
+        const [rechts, links] = arme; // rechts = Seite der Tasse (vom Hasen aus)
+        // Tasse: in der Pfote, zum Mund, zurück, dann aufs Tischchen
+        const zumMund = schluck;
+        const abstellen = smooth(3.0, 3.55, t);
+        let tasseRumpf = TASSE_HAND.clone().lerp(TASSE_MUND, zumMund);
+        const pfoteRechts = tasseRumpf.clone().add(v3(0.0, 0.01, -0.07));
+        if (t < 3.6) {
+          // Weltposition der Tasse aus Rumpf-Koordinaten
+          koerper.updateMatrixWorld(true);
+          const welt = tasseRumpf.clone().applyMatrix4(koerper.matrixWorld);
+          welt.lerp(TISCH_OBEN, abstellen);
+          tasse.position.copy(welt);
+          tasse.rotation.set(zumMund * 0.5, 0.6, 0);
+          const zielRumpf = welt.clone();
+          koerper.worldToLocal(zielRumpf);
+          greife(rechts, zielRumpf.add(v3(-0.065, 0.035, 0.0)));
+        } else {
+          tasse.position.copy(TISCH_OBEN);
+          tasse.rotation.set(0, 0.6, 0);
+          const ruhe = v3(-0.2, lerp(0.38, 0.33, P.stehen), 0.18);
+          const hoch = v3(-0.32, 0.78, 0.12);
+          const nach = kf([[3.6, [-0.3, 0.42, 0.06]], [3.9, [ruhe.x, ruhe.y, ruhe.z]]], t);
+          let z = t < 3.9 ? v3(...nach) : ruhe.clone();
+          z.lerp(v3(-0.28, 0.5, 0.2), P.luft).lerp(hoch, P.freude);
+          greife(rechts, z);
+        }
+        // linke Pfote: liegt auf der Armlehne/dem Bauch, beim Hoppeln mitschwingend, am Schluss Winken
+        const winken = smooth(8.5, 8.8, t);
+        const wink = v3(0.3 + Math.sin((t - 8.5) * 11) * 0.07, 0.78, 0.14);
+        let zl = v3(lerp(0.27, 0.2, P.stehen), lerp(0.3, 0.33, P.stehen), lerp(0.12, 0.18, P.stehen));
+        zl.lerp(v3(0.28, 0.5, 0.2), P.luft).lerp(v3(0.32, 0.78, 0.12), P.freude).lerp(wink, winken);
+        greife(links, zl);
+        if (t > 8.4) {
+          const ruhe = v3(-0.2, 0.33, 0.18);
+          greife(rechts, ruhe);
+        }
+
+        // Kamera: nah am Stuhl, zieht beim Hoppeln zurück und folgt dem Hasen
+        const k = kf([[0, [-0.05, 1.05, 3.5, -0.05, 0.98, 0]], [3.6, [-0.08, 1.02, 3.3, -0.08, 0.97, 0]], [4.6, [0.05, 0.95, 4.4, 0.05, 0.85, 0.4]], [7.4, [0.12, 0.85, 5.3, 0.12, 0.72, 1.2]], [10, [0.12, 0.83, 5.1, 0.12, 0.72, 1.3]]], t);
+        camera.position.set(k[0], k[1], k[2]);
+        camera.lookAt(k[3], k[4], k[5]);
+        renderer.render(scene, camera);
+      };
+
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      renderAt(0);
+      window.__haseFertig();
+    </script>
+  </body>
+</html>

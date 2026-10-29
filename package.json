@@ -26,6 +26,8 @@
     "render:pdf-stories": "cd remotion && for i in 1 2; do npx remotion still PdfStory$i out/pdf-story-$i.png || exit 1; done",
     "render:wiese": "cd hyperframes/wiese && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-wiese.mp4",
     "render:hoppelhase": "python3 remotion/scripts/hasen-musik.py remotion/public/hasen-musik.wav && cd remotion && npx remotion render Hoppelhase out/hoppelhase.mp4",
+    "render:hase3d-bg": "cd hyperframes/hase3d && npx hyperframes render -f 30 -q high -o ../../remotion/public/hyperframes-hase3d.mp4",
+    "render:hase3d": "python3 remotion/scripts/hasen-musik.py remotion/public/hasen-3d-musik.wav 10 && cd remotion && npx remotion render Hoppelhase3D out/hoppelhase-3d.mp4",
     "render:hook-prompt": "cd remotion && npx remotion render HookPrompt out/hook-prompt.mp4"
   }
 }

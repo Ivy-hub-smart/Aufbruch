@@ -218,6 +218,26 @@ npm run render:wiese && npm run render:hoppelhase
 
 Farben des Hasen oben in `Hoppelhase.tsx` (`FELL`, `FELL_DUNKEL`, `CREME`, `ROSA`).
 
+## Video: Hoppelhase in 3D (Stil „Duke the Beaver“)
+
+10 Sekunden, plastischer 3D-Hase mit Fell: hellbraun, cremefarbener Bauch, riesige Ohren,
+zwei grosse Zähne, verschmitzter Blick. Er sitzt im Adirondack-Gartenstuhl und trinkt Tee,
+stellt die Tasse aufs Tischchen, springt auf den Rasen, hoppelt dreimal, macht einen
+Freudensprung und winkt. Dazu die fröhliche Kinder-Melodie (Landungen im Takt).
+
+| Teil | Tool | Datei |
+|---|---|---|
+| 3D-Garten, Stuhl, Tasse, Hase mit Fell-Shader, Bewegung, Kamera | HyperFrames + Three.js | `hyperframes/hase3d/index.html` |
+| Musik darunter | Remotion | `remotion/src/Hoppelhase3D.tsx`, `remotion/scripts/hasen-musik.py` |
+
+Fertiges Video: `remotion/out/hoppelhase-3d.mp4`
+
+```bash
+npm run render:hase3d-bg && npm run render:hase3d
+```
+
+Fellfarben oben im Hasen-Teil von `index.html` (`FELL`, `FELL_SPITZE`, `CREME`).
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.
