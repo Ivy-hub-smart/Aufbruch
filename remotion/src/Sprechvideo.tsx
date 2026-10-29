@@ -11,11 +11,12 @@ const SCHATTEN = "0 2px 6px rgba(40,25,15,0.5), 0 4px 28px rgba(40,25,15,0.7)";
 const SAND = "rgba(74,52,36,0.55)";
 
 // Video, in dem ich in die Kamera spreche. Darüber kommen Karten zu den Sätzen:
-// hook = gross oben, karte = Prompt zum Abfotografieren unten, cta = Pille unten.
+// hook = gross oben, karte = Prompt zum Abfotografieren unten, cta = Pille unten,
+// untertitel = gesprochener Satz auf Brusthöhe (nur wo keine Karte dasselbe zeigt).
 const einblendung = z.object({
   von: z.number(),
   bis: z.number(),
-  art: z.enum(["hook", "karte", "cta"]),
+  art: z.enum(["hook", "karte", "cta", "untertitel"]),
   titel: z.string().optional(),
   text: z.string(),
 });
@@ -37,7 +38,7 @@ export const HOOK_PROMPT: SprechvideoProps = {
   musik: "klavier-27.wav",
   dauer: 26.3,
   einblendungen: [
-    { von: 0, bis: 6.4, art: "hook", titel: "❌ Schreib der KI nie:", text: "«Erstelle mir eine Hook.»" },
+    { von: 0, bis: 3.6, art: "hook", titel: "❌ Schreib der KI nie:", text: "«Erstelle mir eine Hook.»" },
     {
       von: 6.5,
       bis: 20.7,
@@ -45,6 +46,10 @@ export const HOOK_PROMPT: SprechvideoProps = {
       titel: "✅ Schreib stattdessen:",
       text: "«Erstelle mir 5 Hooks für ein Reel über [dein Thema]. Für Menschen, die neben dem Job ein 2. Einkommen aufbauen wollen. Jede Hook soll ein Gefühl treffen und höchstens 6 Wörter haben.»",
     },
+    { von: 3.7, bis: 6.3, art: "untertitel", text: "Da kommt nur Einheitsbrei raus." },
+    { von: 18.9, bis: 20.8, art: "untertitel", text: "Der Unterschied ist riesig." },
+    { von: 20.9, bis: 23.0, art: "untertitel", text: "Solche KI-Tipps lerne ich gerade." },
+    { von: 23.0, bis: 24.7, art: "untertitel", text: "Willst du auch?" },
     { von: 20.9, bis: 26.3, art: "cta", text: "Kommentiere START 👇" },
   ],
 };
@@ -52,7 +57,7 @@ export const HOOK_PROMPT: SprechvideoProps = {
 const weich = (f: number, dauer: number) =>
   interpolate(f, [0, dauer], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
 
-const Einblendung: React.FC<{ art: "hook" | "karte" | "cta"; titel?: string; text: string; sofort: boolean }> = ({ art, titel, text, sofort }) => {
+const Einblendung: React.FC<{ art: "hook" | "karte" | "cta" | "untertitel"; titel?: string; text: string; sofort: boolean }> = ({ art, titel, text, sofort }) => {
   const frame = useCurrentFrame();
   const p = sofort ? 1 : weich(frame, 14);
   const stil = { opacity: p, transform: `translateY(${(1 - p) * 20}px)` };
@@ -72,6 +77,15 @@ const Einblendung: React.FC<{ art: "hook" | "karte" | "cta"; titel?: string; tex
         <div style={{ background: SAND, borderRadius: 32, padding: "30px 40px 36px", textAlign: "center" }}>
           <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 54, color: "white", textShadow: SCHATTEN }}>{titel}</div>
           <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 44, lineHeight: 1.32, color: "white", textShadow: SCHATTEN, marginTop: 12 }}>{text}</div>
+        </div>
+      </div>
+    );
+  }
+  if (art === "untertitel") {
+    return (
+      <div style={{ position: "absolute", top: 860, left: 60, right: 60, display: "flex", justifyContent: "center", ...stil }}>
+        <div style={{ background: SAND, borderRadius: 24, padding: "16px 32px 20px", fontFamily: SANS, fontWeight: 800, fontSize: 52, lineHeight: 1.2, color: "white", textShadow: SCHATTEN, textAlign: "center" }}>
+          {text}
         </div>
       </div>
     );

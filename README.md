@@ -181,7 +181,7 @@ Link-Sticker (`remotion/out/pdf-story-1.png`, `-2.png`, `npm run render:pdf-stor
 
 ## Reel „Schreib der KI nie…“ (ich spreche in die Kamera)
 
-26 Sekunden aus meinem Laptop-Video: oben ❌ «Erstelle mir eine Hook.», ab „Schreib stattdessen“
+26 Sekunden aus meinem Laptop-Video: oben ❌ «Erstelle mir eine Hook.», Untertitel zu den übrigen Sätzen, ab „Schreib stattdessen“
 unten der bessere Prompt als ✅-Karte, am Schluss „Kommentiere START 👇“. Stimme aufbereitet,
 leises Klavier darunter. Vorlage `remotion/src/Sprechvideo.tsx` (`HOOK_PROMPT`, Zeiten in Sekunden),
 Video `remotion/out/hook-prompt.mp4`.
