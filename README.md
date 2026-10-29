@@ -186,6 +186,9 @@ unten der bessere Prompt als ✅-Karte, am Schluss „Kommentiere START 👇“.
 leises Klavier darunter. Vorlage `remotion/src/Sprechvideo.tsx` (`HOOK_PROMPT`, Zeiten in Sekunden),
 Video `remotion/out/hook-prompt.mp4`.
 
+Version ohne Text zum Beschriften in Instagram Edits: `remotion/out/hook-prompt-ohne-text.mp4`
+(Anfang näher am Gesicht, ab 3,6 s etwas weiter; Stimme + leises Klavier).
+
 Hintergrund unscharf (Porträtmodus), damit man die Wohnung nicht erkennt:
 
 ```bash
