@@ -186,6 +186,15 @@ unten der bessere Prompt als ✅-Karte, am Schluss „Kommentiere START 👇“.
 leises Klavier darunter. Vorlage `remotion/src/Sprechvideo.tsx` (`HOOK_PROMPT`, Zeiten in Sekunden),
 Video `remotion/out/hook-prompt.mp4`.
 
+Hintergrund unscharf (Porträtmodus), damit man die Wohnung nicht erkennt:
+
+```bash
+npx --prefix hyperframes hyperframes remove-background original.mp4 -o remotion/public/hook-prompt-ich.webm --quality best
+ffmpeg -i original.mp4 -c:v libvpx-vp9 -i remotion/public/hook-prompt-ich.webm -filter_complex \
+  "[0:v]scale=1080:1920,boxblur=28:2,eq=brightness=-0.03:saturation=0.9[bg];[1:v]scale=1080:1920,format=rgba[fg];[bg][fg]overlay=0:0,format=yuv420p" \
+  -an remotion/public/hook-prompt-portrait.mp4
+```
+
 ## Eigenes Foto einsetzen
 
 Ersetze `remotion/public/kopf.png` durch dein Foto (quadratisch, Gesicht mittig) und rendere neu.

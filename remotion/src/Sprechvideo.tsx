@@ -16,6 +16,9 @@ const einblendung = z.object({
   titel: z.string().optional(),
   text: z.string(),
 });
+// video: fertiges Hochformat-Video. Für einen unscharfen Hintergrund (Porträtmodus)
+// vorher mit `hyperframes remove-background` freistellen und mit ffmpeg über eine
+// weichgezeichnete Kopie legen (siehe README).
 export const sprechvideoSchema = z.object({
   video: z.string(),
   stimme: z.string(),
@@ -26,7 +29,7 @@ export const sprechvideoSchema = z.object({
 export type SprechvideoProps = z.infer<typeof sprechvideoSchema>;
 
 export const HOOK_PROMPT: SprechvideoProps = {
-  video: "hook-prompt.mp4",
+  video: "hook-prompt-portrait.mp4",
   stimme: "hook-prompt-stimme.wav",
   musik: "klavier-27.wav",
   dauer: 26.3,
