@@ -252,3 +252,28 @@ npm run render                                        # erst HyperFrames, dann R
 
 Ohne Zugriff auf remotion.media kann Remotion einen vorhandenen Chrome nutzen:
 `REMOTION_BROWSER=/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell npm run render`
+
+## Video: Earth Zoom auf eine Luxusvilla bei Nacht
+
+10 Sekunden im Stil „Google-Earth-Zoom“: Die echte Erde aus dem All (NASA Blue Marble,
+Stadtlichter bei Nacht, Wolken, Sternenhimmel), die Kamera stürzt Richtung Riviera, fliegt
+durch die Wolken, sinkt senkrecht über Stadtlichter, Küste, Nachbarvillen mit Pools und Wald
+und kippt am Schluss vor eine moderne Luxusvilla auf der Klippe. Beim Ankommen gehen
+nacheinander die Lichter an: Erdgeschoss, Obergeschoss, Gartenleuchten, Palmen, Feuerschalen,
+LED-Bänder und Downlights im Vordach. Dazu eigener Klang: Weltraum-Teppich, Whoosh durch die
+Wolken, Aufschlag, warmer Akkord und Glöckchen bei jedem Licht.
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Globus, Wolken-Durchflug, Küste, Villa, Lichter, Kamera (Three.js mit Bloom) | HyperFrames + Three.js | `hyperframes/erde/index.html` |
+| Klang (lizenzfrei, eigene Synthese) | Python | `remotion/scripts/erde-sound.py` |
+| Erd-Texturen (NASA, aus dem npm-Paket `three-globe`) | – | `hyperframes/erde/assets/` |
+
+Fertiges Video: `remotion/out/earth-zoom-villa.mp4`
+
+```bash
+npm run render:erde-bg && npm run render:erde
+```
+
+Zeitpunkte der Lichter stehen unten in `index.html` (`an(7.15)`, `an(7.45)`, …), das Ziel auf
+der Erde oben (`ZIEL`, Breiten-/Längengrad).
