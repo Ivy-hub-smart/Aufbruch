@@ -2,3 +2,4 @@ node_modules/
 .hyperframes/
 .hyperframes-*.hf-transaction-*/
 remotion/public/work-*/
+pip-video/build/
