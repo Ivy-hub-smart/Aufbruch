@@ -83,7 +83,7 @@ for sc in scenes:
                     "-frames:v", str(FPS * SEC), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", str(cp)], check=True)
     lst.append(f"file '{cp}'")
 (D / "build" / "list.txt").write_text("\n".join(lst))
-out = D / "pip_und_pippin.mp4"
+out = D / "pip_und_pippin_storyboard.mp4"
 subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(D / "build" / "list.txt"),
                 "-c", "copy", "-movflags", "+faststart", str(out)], check=True)
 print(f"fertig: {out}  (echte Bilder: {real}/{len(scenes)})")
