@@ -1,4 +1,4 @@
-"""Rendert das 3-Minuten-Video: 20 Bilder x 3 s, sanfter Zoom pro Bild.
+"""Rendert das 1-Minuten-Video: 20 Bilder x 3 s, sanfter Zoom pro Bild.
 Liegt bilder/NN.jpg|png (NN = 01..20) vor, wird das echte Bild verwendet,
 sonst eine Storyboard-Karte (Ausschnitt aus pip-referenz.jpg + Szenentext)."""
 import json, pathlib, subprocess, textwrap
