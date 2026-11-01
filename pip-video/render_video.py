@@ -1,5 +1,5 @@
-"""Rendert das 3-Minuten-Video: 60 Bilder x 3 s, sanfter Zoom pro Bild.
-Liegt bilder/NN.jpg|png (NN = 01..60) vor, wird das echte Bild verwendet,
+"""Rendert das 3-Minuten-Video: 20 Bilder x 3 s, sanfter Zoom pro Bild.
+Liegt bilder/NN.jpg|png (NN = 01..20) vor, wird das echte Bild verwendet,
 sonst eine Storyboard-Karte (Ausschnitt aus pip-referenz.jpg + Szenentext)."""
 import json, pathlib, subprocess, textwrap
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageEnhance
@@ -75,4 +75,4 @@ for sc in scenes:
 out = D / "pip_und_der_rote_drachen.mp4"
 subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(D / "build" / "list.txt"),
                 "-c", "copy", "-movflags", "+faststart", str(out)], check=True)
-print(f"fertig: {out}  (echte Bilder: {real}/60)")
+print(f"fertig: {out}  (echte Bilder: {real}/{len(scenes)})")

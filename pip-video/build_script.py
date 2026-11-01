@@ -1,5 +1,5 @@
 """Erzeugt aus der Szenenliste das Drehbuch (DREHBUCH.md) und die Bild-Prompts (prompts.json).
-60 Szenen x 3 Sekunden = 180 Sekunden (3 Minuten)."""
+20 Szenen x 3 Sekunden = 60 Sekunden (1 Minute); die 60er-Langfassung steht in der Liste S."""
 import json, pathlib
 
 PIP = ("Pip, a small fluffy chestnut-brown puppy with long floppy ears, big round blue-grey "
@@ -137,7 +137,11 @@ S = [
  (5, "Mond über der Stadt – Schlussbild mit Titel.", "Gute Nacht, Pip.",
   "Moonlit night over the small town with starry sky, a single lit window, peaceful ending shot"),
 ]
-assert len(S) == 60, len(S)
+# 1-Minuten-Fassung: 20 Schlüsselszenen aus der Langfassung (Nummern der 60er-Liste)
+AUSWAHL = [1, 2, 7, 8, 13, 17, 20, 26, 30, 32, 33, 36, 38, 42, 45, 47, 49, 50, 53, 59]
+SPRECHER_NEU = {2: "… und Pip schlief noch tief und fest.", 59: "Gute Nacht, Pip."}
+S = [(a, de, SPRECHER_NEU.get(n, vo), pr) for n, (a, de, vo, pr) in enumerate(S, 1) if n in AUSWAHL]
+assert len(S) == 20, len(S)
 
 AKTE = {1: "Akt 1 – Ein roter Punkt am Himmel", 2: "Akt 2 – Hinaus in die Stadt",
         3: "Akt 3 – Im Park", 4: "Akt 4 – Die Rettung", 5: "Akt 5 – Neue Freunde"}
@@ -148,7 +152,7 @@ def ts(sec):
 out = pathlib.Path(__file__).parent
 prompts, md = [], []
 md += ["# Pip und der rote Drachen", "",
-       "Kurzfilm, **3:00 Min.**, **60 Bilder à 3 Sekunden**, 16:9. Referenz: `pip-referenz.jpg`.", "",
+       "Kurzfilm, **1:00 Min.**, **20 Bilder à 3 Sekunden**, 16:9. Referenz: `pip-referenz.jpg`.", "",
        "**Figur (in jedem Prompt enthalten):** " + PIP, "", "**Stil-Zusatz:** " + STYLE, ""]
 akt = 0
 for i, (a, de, vo, p) in enumerate(S):
