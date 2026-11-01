@@ -3,3 +3,5 @@ node_modules/
 .hyperframes-*.hf-transaction-*/
 remotion/public/work-*/
 pip-video/build/
+pip-video/animation/build/
+__pycache__/
