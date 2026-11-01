@@ -1,17 +1,23 @@
 """Rendert das 1-Minuten-Video: 20 Bilder x 3 s, sanfter Zoom pro Bild.
 Liegt bilder/NN.jpg|png (NN = 01..20) vor, wird das echte Bild verwendet,
-sonst eine Storyboard-Karte (Ausschnitt aus pip-referenz.jpg + Szenentext)."""
+sonst eine Storyboard-Karte (Ausschnitte aus pip-/pippin-referenz.jpg + Szenentext)."""
 import json, pathlib, subprocess, textwrap
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageEnhance
 
 D = pathlib.Path(__file__).parent
 W, H, FPS, SEC = 1920, 1080, 25, 3
 scenes = json.loads((D / "prompts.json").read_text(encoding="utf-8"))
-ref = Image.open(D / "pip-referenz.jpg").convert("RGB")
-rw, rh = ref.size
-# Ausschnitte aus dem Referenzblatt (relativ): Ganzkörper, 3 Gesichter, Rückansicht, Seitenansicht
-CROPS = [(0.30, 0.10, 0.70, 0.95), (0.03, 0.13, 0.22, 0.38), (0.03, 0.40, 0.22, 0.66),
-         (0.04, 0.68, 0.23, 0.93), (0.76, 0.05, 0.94, 0.45), (0.74, 0.53, 0.95, 0.96)]
+REFS = {"pip": Image.open(D / "pip-referenz.jpg").convert("RGB"),
+        "pippin": Image.open(D / "pippin-referenz.jpg").convert("RGB")}
+# Ausschnitte aus den Referenzblättern (relativ)
+CROPS = {"pip": [(0.30, 0.10, 0.70, 0.95), (0.03, 0.13, 0.22, 0.38), (0.03, 0.40, 0.22, 0.66),
+                 (0.04, 0.68, 0.23, 0.93), (0.74, 0.53, 0.95, 0.96)],
+         "pippin": [(0.03, 0.17, 0.37, 0.80), (0.69, 0.10, 0.91, 0.42), (0.67, 0.41, 0.93, 0.84)]}
+
+def crop(who, k):
+    ref = REFS[who]; x0, y0, x1, y1 = CROPS[who][k % len(CROPS[who])]
+    return ref.crop((int(x0 * ref.width), int(y0 * ref.height), int(x1 * ref.width), int(y1 * ref.height)))
+
 FB = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 f_big, f_mid, f_small = ImageFont.truetype(FB, 64), ImageFont.truetype(FR, 44), ImageFont.truetype(FR, 30)
@@ -23,11 +29,16 @@ def cover(img):
     return img.crop((l, t, l + W, t + H))
 
 def card(sc):
-    x0, y0, x1, y1 = CROPS[(sc["nr"] - 1) % len(CROPS)]
-    crop = ref.crop((int(x0 * rw), int(y0 * rh), int(x1 * rw), int(y1 * rh)))
-    bg = ImageEnhance.Brightness(cover(crop).filter(ImageFilter.GaussianBlur(28))).enhance(0.45)
-    fg = crop.copy(); fg.thumbnail((760, 760))
-    bg.paste(fg, (120, (H - fg.height) // 2))
+    who, k = sc.get("figuren", "pip"), sc["nr"]
+    parts = [crop("pip", 0), crop("pippin", 0)] if who in ("beide", "none") else [crop(who, k)]
+    bg = ImageEnhance.Brightness(cover(parts[-1]).filter(ImageFilter.GaussianBlur(28))).enhance(0.45)
+    if who == "none":
+        parts = [p.resize((p.width // 2, p.height // 2)) for p in parts]
+    box = (760 // len(parts), 760)
+    x = 120
+    for p in parts:
+        p = p.copy(); p.thumbnail(box)
+        bg.paste(p, (x, (H - p.height) // 2)); x += p.width + 20
     d = ImageDraw.Draw(bg)
     x = 960
     d.text((x, 200), f"Szene {sc['nr']:02d}  ·  {sc['start']}–{sc['ende']}", font=f_small, fill=(255, 210, 120))
@@ -72,7 +83,7 @@ for sc in scenes:
                     "-frames:v", str(FPS * SEC), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", str(cp)], check=True)
     lst.append(f"file '{cp}'")
 (D / "build" / "list.txt").write_text("\n".join(lst))
-out = D / "pip_und_der_rote_drachen.mp4"
+out = D / "pip_und_pippin.mp4"
 subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(D / "build" / "list.txt"),
                 "-c", "copy", "-movflags", "+faststart", str(out)], check=True)
 print(f"fertig: {out}  (echte Bilder: {real}/{len(scenes)})")
