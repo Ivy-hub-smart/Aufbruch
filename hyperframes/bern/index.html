@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      #szene { display: block; width: 1080px; height: 1920px; }
+      #name {
+        position: absolute; left: 72px; bottom: 190px; opacity: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #fff;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+      }
+      #name .balken { width: 0; height: 8px; background: #d52b1e; margin-bottom: 22px; }
+      #name .wer { font-size: 70px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+      #name .wo { font-size: 40px; font-weight: 400; margin-top: 16px; opacity: 0.92; }
+      #name .koord { font-size: 28px; font-weight: 400; margin-top: 10px; opacity: 0.7; letter-spacing: 1px; }
+    </style>
+    <script>
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["bern"] = new Promise((fertig) => { window.__bernFertig = fertig; });
+    </script>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+      <canvas id="szene" class="clip layer" data-start="0" data-duration="12" data-track-index="0" width="1080" height="1920"></canvas>
+      <div id="name">
+        <div class="balken"></div>
+        <div class="wer">Jean Hutmacher</div>
+        <div class="wo">vor dem Bundeshaus, Bern</div>
+        <div class="koord">46° 56′ 48″ N · 7° 26′ 39″ E</div>
+      </div>
+    </div>
+    <script type="module">
+      import * as THREE from "./assets/three.module.js";
+      import { EffectComposer } from "./assets/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "./assets/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "./assets/addons/postprocessing/UnrealBloomPass.js";
+      import { OutputPass } from "./assets/addons/postprocessing/OutputPass.js";
+      import { ShaderPass } from "./assets/addons/postprocessing/ShaderPass.js";
+
+      // =====================================================================
+      // Earth Zoom nach Bern: aus dem All (NASA-Texturen) über Europa und die
+      // verschneiten Alpen hinunter in die Schweiz, durch die Wolken, über die
+      // Aareschlaufe mit den roten Dächern der Altstadt auf den Bundesplatz.
+      // Vor dem Bundeshaus steht Jean Hutmacher, die Wasserspiele springen an,
+      // die Schweizer Fahne weht, und Jean zieht zum Gruss den Hut.
+      //   0.0 – 3.25 s  Globus, Kamera stürzt Richtung Schweiz
+      //   2.7 – 3.9 s   durch die Wolken
+      //   3.25 – 6.9 s  Sinkflug senkrecht über Aare, Altstadt, Bundeshaus
+      //   6.2 – 9.4 s   Kamera kippt auf Augenhöhe, Alpen am Horizont
+      //   7.3 s         Wasserspiele springen an, 9.0 s Jean zieht den Hut
+      //   9.9 s         Namenseinblendung
+      // Koordinaten im Nahbereich: Meter, x = Westen, z = Norden. Die Kamera
+      // landet nördlich vom Bundeshaus und blickt nach Süden (Alpen dahinter).
+      // =====================================================================
+
+      let seed = 1848;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a)); return x * x * (3 - 2 * x); };
+      const lerp = (a, b, x) => a + (b - a) * x;
+      const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+      const D2R = Math.PI / 180;
+
+      // ---------- Rauschen (deterministisch) ----------
+      const hash = (i, j) => {
+        let h = (Math.imul(i, 374761393) + Math.imul(j, 668265263)) | 0;
+        h = Math.imul(h ^ (h >>> 13), 1274126177);
+        return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+      };
+      const vnoise = (x, z) => {
+        const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+        const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+        const a = hash(xi, zi), b = hash(xi + 1, zi), c = hash(xi, zi + 1), d = hash(xi + 1, zi + 1);
+        return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+      };
+      const fbm = (x, z, o = 4) => {
+        let s = 0, a = 0.5, f = 1;
+        for (let i = 0; i < o; i++) { s += a * vnoise(x * f + i * 17.3, z * f - i * 9.1); f *= 2.03; a *= 0.5; }
+        return s;
+      };
+
+      // ---------- Renderer ----------
+      const canvas = document.getElementById("szene");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(1);
+      renderer.setSize(1080, 1920, false);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+
+      const loader = new THREE.TextureLoader();
+      const lade = async (f, srgb = true) => {
+        const t = await loader.loadAsync("./assets/" + f);
+        if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 8;
+        return t;
+      };
+      const [texTag, texNacht, texWasser, texRelief, texWolken, texSterne] = await Promise.all([
+        lade("earth-blue-marble.jpg"), lade("earth-night.jpg"), lade("earth-water.png", false),
+        lade("earth-topology.png", false), lade("clouds.jpg", false), lade("night-sky.jpg"),
+      ]);
+
+      const canvasTex = (w, h, zeichne, srgb = true) => {
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        zeichne(c.getContext("2d"), w, h);
+        const t = new THREE.CanvasTexture(c);
+        if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 8;
+        return t;
+      };
+
+      // =====================================================================
+      // 1) GLOBUS (Tag über Europa)
+      // =====================================================================
+      const globus = new THREE.Scene();
+      const globusCam = new THREE.PerspectiveCamera(38, 1080 / 1920, 0.001, 200);
+      const latLon = (lat, lon) => {
+        const th = (90 - lat) * D2R, ph = (lon + 180) * D2R;
+        return v3(-Math.cos(ph) * Math.sin(th), Math.cos(th), Math.sin(ph) * Math.sin(th));
+      };
+      // Sommernachmittag: Sonne über dem Atlantik vor Westafrika
+      const SONNE = latLon(21, -16).normalize();
+      const ZIEL = { lat: 46.9466, lon: 7.4441 }; // Bundesplatz, Bern
+
+      const erdeMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTag: { value: texTag }, uNacht: { value: texNacht }, uWasser: { value: texWasser },
+          uRelief: { value: texRelief }, uWolken: { value: texWolken }, uSonne: { value: SONNE },
+        },
+        vertexShader: `
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vUv = uv; vN = normalize(position);
+            vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+            gl_Position = projectionMatrix * viewMatrix * w;
+          }`,
+        fragmentShader: `
+          uniform sampler2D uTag, uNacht, uWasser, uRelief, uWolken; uniform vec3 uSonne;
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vec3 n = normalize(vN);
+            vec2 px = vec2(1.0 / 2048.0, 1.0 / 1024.0);
+            float hC = texture2D(uRelief, vUv).r;
+            float hX = texture2D(uRelief, vUv + vec2(px.x, 0.0)).r;
+            float hY = texture2D(uRelief, vUv + vec2(0.0, px.y)).r;
+            vec3 east = normalize(cross(vec3(0.0, 1.0, 0.0), n));
+            vec3 north = cross(n, east);
+            vec3 nb = normalize(n - (east * (hX - hC) + north * (hY - hC)) * 4.0);
+            float ndl = dot(nb, uSonne);
+            float tag = smoothstep(-0.10, 0.22, dot(n, uSonne));
+            vec3 V = normalize(cameraPosition - vW);
+            vec3 col = texture2D(uTag, vUv).rgb;
+            float wasser = texture2D(uWasser, vUv).r;
+            // Gletscher und Schnee auf den hohen Gipfeln (Alpen)
+            float schnee = smoothstep(0.30, 0.52, hC) * (1.0 - wasser);
+            col = mix(col, vec3(0.93, 0.95, 0.98), schnee * 0.8);
+            float ws = texture2D(uWolken, vUv + vec2(0.0015, 0.0008)).r;
+            col *= 1.0 - ws * 0.45;
+            vec3 lit = col * (max(ndl, 0.0) * 1.35 + 0.015) * tag;
+            vec3 H = normalize(uSonne + V);
+            lit += vec3(1.0, 0.85, 0.6) * pow(max(dot(n, H), 0.0), 60.0) * wasser * 0.9 * tag;
+            float daemm = smoothstep(-0.18, 0.0, dot(n, uSonne)) * (1.0 - smoothstep(0.0, 0.22, dot(n, uSonne)));
+            lit += vec3(0.5, 0.22, 0.08) * daemm * 0.012;
+            vec3 nl = texture2D(uNacht, vUv).rgb;
+            float stadt = max(nl.r - nl.b * 0.85, 0.0) * 3.0;
+            vec3 lichter = nl * 0.35 + vec3(1.0, 0.68, 0.36) * pow(stadt, 1.4) * 2.6;
+            lit += lichter * (1.0 - smoothstep(-0.08, 0.12, dot(n, uSonne)));
+            float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+            lit += vec3(0.25, 0.5, 1.0) * fres * (0.04 + 0.9 * tag);
+            gl_FragColor = vec4(lit, 1.0);
+          }`,
+      });
+      const erde = new THREE.Mesh(new THREE.SphereGeometry(1, 256, 128), erdeMat);
+      globus.add(erde);
+
+      const wolkenMat = new THREE.ShaderMaterial({
+        uniforms: { uWolken: { value: texWolken }, uSonne: { value: SONNE }, uLoch: { value: latLon(ZIEL.lat, ZIEL.lon) } },
+        transparent: true, depthWrite: false,
+        vertexShader: `
+          varying vec2 vUv; varying vec3 vN;
+          void main() { vUv = uv; vN = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform sampler2D uWolken; uniform vec3 uSonne, uLoch;
+          varying vec2 vUv; varying vec3 vN;
+          void main() {
+            float a = texture2D(uWolken, vUv).r;
+            // Föhn-Lücke über Bern: schönes Wetter am Ziel
+            float loch = smoothstep(0.9995, 0.99985, dot(normalize(vN), uLoch));
+            a *= 1.0 - loch * 0.85;
+            float ndl = dot(normalize(vN), uSonne);
+            float tag = smoothstep(-0.12, 0.25, ndl);
+            vec3 c = vec3(1.0) * (max(ndl, 0.0) * 1.2 + 0.02) * tag + vec3(0.03, 0.04, 0.07) * (1.0 - tag);
+            gl_FragColor = vec4(c, a * 0.92);
+          }`,
+      });
+      const wolken = new THREE.Mesh(new THREE.SphereGeometry(1.006, 192, 96), wolkenMat);
+      globus.add(wolken);
+
+      const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.045, 128, 64), new THREE.ShaderMaterial({
+        uniforms: { uSonne: { value: SONNE } },
+        side: THREE.BackSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+        vertexShader: `varying vec3 vN; varying vec3 vW; void main() { vN = normalize(position); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+        fragmentShader: `
+          uniform vec3 uSonne; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vec3 V = normalize(cameraPosition - vW);
+            float k = pow(max(0.0, 0.72 - dot(-V, normalize(vN))), 5.0) * 9.0;
+            float tag = smoothstep(-0.3, 0.4, dot(normalize(vN), uSonne));
+            gl_FragColor = vec4(vec3(0.3, 0.55, 1.0) * k * (0.08 + tag), 1.0);
+          }`,
+      }));
+      globus.add(atmo);
+
+      const sterneMat = new THREE.MeshBasicMaterial({ map: texSterne, side: THREE.BackSide, color: 0x9a9a9a, depthWrite: false });
+      globus.add(new THREE.Mesh(new THREE.SphereGeometry(120, 64, 32), sterneMat));
+
+      // =====================================================================
+      // 2) BERN (Meter, x = Westen, z = Norden; Bundeshaus-Nordfassade bei z = -80)
+      // =====================================================================
+      const land = new THREE.Scene();
+      const kam = new THREE.PerspectiveCamera(38, 1080 / 1920, 0.1, 200000);
+      const DUNST = new THREE.Color(0xb8c9dc);
+      land.fog = new THREE.FogExp2(DUNST, 0.00002);
+
+      // Aare: Schlaufe südlich am Bundeshaus vorbei, um die Altstadt (Osten = -x) herum
+      const AARE = [[-900, -4200], [-300, -1700], [-60, -560], [40, -285], [-500, -255], [-1050, -200], [-1450, 30],
+        [-1480, 300], [-1150, 520], [-600, 560], [-80, 700], [600, 1200], [1500, 2600], [3500, 4800], [6000, 7500]].map(([x, z]) => v3(x, 0, z));
+      const aareDist = (x, z) => {
+        let best = 1e9;
+        for (let i = 1; i < AARE.length; i++) {
+          const a = AARE[i - 1], b = AARE[i];
+          const dx = b.x - a.x, dz = b.z - a.z;
+          const u = clamp(((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz));
+          const d = Math.hypot(x - a.x - dx * u, z - a.z - dz * u);
+          if (d < best) best = d;
+        }
+        return best;
+      };
+      // Altstadt-Halbinsel: innerhalb der Schlaufe
+      const altstadt = (x, z) => x < 120 && x > -1420 && z > -230 && z < 520 + 0.2 * x && aareDist(x, z) > 70;
+
+      const hoehe = (x, z) => {
+        const r = Math.hypot(x, z);
+        // Hügel: Gurten im Süden, Bantiger im Osten, sanftes Mittelland
+        let h = 190 * fbm(x / 5200 + 3.1, z / 5200, 4) * smooth(1200, 6000, r) + 25 * fbm(x / 700, z / 700, 3) * smooth(300, 1500, r);
+        h += 310 * Math.exp(-(((x - 300) / 1500) ** 2 + ((z + 3600) / 900) ** 2));   // Gurten
+        h += 380 * Math.exp(-(((x + 9000) / 2500) ** 2 + ((z - 4000) / 2200) ** 2)); // Bantiger
+        // Stadtplateau flach
+        h = lerp(h, 0, 1 - smooth(600, 1600, r));
+        // Aaretal: steile Hänge, ca. 40 m tief
+        const d = aareDist(x, z);
+        h = lerp(h, -42, 1 - smooth(45, 150, d));
+        return h;
+      };
+
+      // ---------- Licht: Sommernachmittag ----------
+      const SONNE_L = v3(0.42, 0.62, 0.66).normalize(); // aus Nordwesten, hinter der Kamera
+      const sonne = new THREE.DirectionalLight(0xfff0d8, 2.9);
+      sonne.position.copy(SONNE_L).multiplyScalar(400);
+      sonne.castShadow = true;
+      sonne.shadow.mapSize.set(4096, 4096);
+      Object.assign(sonne.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 10, far: 1200 });
+      sonne.shadow.bias = -0.0004;
+      sonne.shadow.normalBias = 0.04;
+      sonne.target.position.set(0, 0, -60);
+      land.add(sonne); land.add(sonne.target);
+      const hemi = new THREE.HemisphereLight(0x9fc4ff, 0x4f5a3a, 1.0);
+      land.add(hemi);
+
+      // ---------- Himmel ----------
+      const himmelMat = new THREE.ShaderMaterial({
+        uniforms: { uSonne: { value: SONNE_L } },
+        side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false,
+        vertexShader: `varying vec3 vD; void main() { vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform vec3 uSonne; varying vec3 vD;
+          void main() {
+            vec3 d = normalize(vD);
+            float h = d.y;
+            vec3 c = mix(vec3(0.72, 0.8, 0.88), vec3(0.2, 0.42, 0.82), smoothstep(-0.02, 0.45, h));
+            c = mix(c, vec3(0.45, 0.5, 0.45), smoothstep(0.0, -0.1, h));
+            float s = max(dot(d, uSonne), 0.0);
+            c += vec3(1.0, 0.85, 0.6) * (pow(s, 8.0) * 0.25 + pow(s, 400.0) * 4.0);
+            gl_FragColor = vec4(c, 1.0);
+          }`,
+      });
+      const himmel = new THREE.Mesh(new THREE.SphereGeometry(90000, 64, 32), himmelMat);
+      himmel.renderOrder = -1000; // zuerst, ohne Tiefentest: nie von der Far-Plane abgeschnitten
+      land.add(himmel);
+      {
+        const umgebung = new THREE.Scene();
+        umgebung.add(new THREE.Mesh(new THREE.SphereGeometry(100, 64, 32), himmelMat));
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        land.environment = pmrem.fromScene(umgebung, 0.0).texture;
+        land.environmentIntensity = 0.45;
+      }
+
+      // ---------- Gelände in drei Detailstufen ----------
+      const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
+      const wald = (x, z) => fbm(x / 420 + 4.1, z / 420 - 2.3, 4);
+      const felder = (x, z) => vnoise(x / 160 + 9.7, z / 110 - 3.3);
+      const gelaende = (gross, segs, loch) => {
+        const g = new THREE.PlaneGeometry(gross, gross, segs, segs);
+        g.rotateX(-Math.PI / 2);
+        const p = g.attributes.position, farben = [];
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), z = p.getZ(i);
+          let h = hoehe(x, z);
+          if (loch && Math.abs(x) < loch && Math.abs(z) < loch) h -= 80;
+          p.setY(i, h);
+          const r = Math.hypot(x, z);
+          const n = fbm(x / 60, z / 60, 3);
+          // Wiesen und Felder (Flickenteppich)
+          const fe = felder(x, z);
+          let c = fe < 0.33 ? [0.38, 0.5, 0.2] : fe < 0.6 ? [0.3, 0.45, 0.16] : fe < 0.8 ? [0.62, 0.58, 0.3] : [0.46, 0.52, 0.24];
+          c = c.map((v) => v * lerp(0.85, 1.12, n));
+          // Wald
+          const w = wald(x, z);
+          const dicht = smooth(0.5, 0.56, w) * smooth(900, 1400, r);
+          c = c.map((v, k) => lerp(v, [0.1, 0.2, 0.08][k], dicht));
+          // Stadt: grau-rötlich, nach aussen ausfransend
+          const st = (1 - smooth(1400 + 900 * fbm(x / 900, z / 900, 2), 4200, r));
+          c = c.map((v, k) => lerp(v, [0.42, 0.42, 0.36][k] * lerp(0.85, 1.1, n), st * 0.55));
+          // Aarehänge bewaldet
+          const d = aareDist(x, z);
+          c = c.map((v, k) => lerp(v, [0.14, 0.24, 0.1][k], (1 - smooth(60, 170, d)) * smooth(40, 60, d)));
+          farben.push(...c);
+        }
+        g.setAttribute("color", new THREE.Float32BufferAttribute(farben, 3));
+        const nrm = g.attributes.normal, e = 4;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), z = p.getZ(i);
+          const n = v3(hoehe(x - e, z) - hoehe(x + e, z), 2 * e, hoehe(x, z - e) - hoehe(x, z + e)).normalize();
+          nrm.setXYZ(i, n.x, n.y, n.z);
+        }
+        const m = new THREE.Mesh(g, terrainMat);
+        m.receiveShadow = true;
+        land.add(m);
+      };
+      gelaende(120000, 380, 3900);
+      gelaende(8000, 400, 330);
+      gelaende(700, 280, 0);
+
+      // ---------- Aare (türkis) ----------
+      {
+        const pts = [];
+        for (let i = 1; i < AARE.length; i++) {
+          const a = AARE[i - 1], b = AARE[i], k = Math.ceil(a.distanceTo(b) / 20);
+          for (let j = 0; j < k; j++) pts.push(a.clone().lerp(b, j / k));
+        }
+        const pos = [], idx = [];
+        pts.forEach((p, i) => {
+          const q = pts[Math.min(i + 1, pts.length - 1)], o = pts[Math.max(i - 1, 0)];
+          const dir = q.clone().sub(o).normalize(), seite = v3(-dir.z, 0, dir.x).multiplyScalar(48);
+          pos.push(p.x + seite.x, -37.5, p.z + seite.z, p.x - seite.x, -37.5, p.z - seite.z);
+          if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i);
+        });
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        g.setIndex(idx); g.computeVertexNormals();
+        const aare = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x2f9a9a, roughness: 0.15, metalness: 0.1, side: THREE.DoubleSide }));
+        aare.receiveShadow = true;
+        land.add(aare);
+      }
+
+      // ---------- Alpen am Südhorizont (Berner Oberland) ----------
+      {
+        const g = new THREE.PlaneGeometry(150000, 34000, 600, 120);
+        g.rotateX(-Math.PI / 2);
+        const p = g.attributes.position, farben = [];
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), z = p.getZ(i);
+          const u = (z + 17000) / 34000; // 0 = nah (Norden), 1 = fern
+          const rid = Math.exp(-(((u - 0.55) / 0.28) ** 2));
+          let h = rid * (1400 + 2200 * Math.pow(fbm(x / 9000 + 7, z / 9000, 5), 1.6) * 1.6);
+          // Eiger, Mönch, Jungfrau als markante Gruppe
+          h += 1300 * Math.exp(-(((x + 6000) / 7000) ** 2)) * rid;
+          h += 900 * Math.pow(Math.max(0, fbm(x / 1800, z / 1800, 4) - 0.35), 1.2) * rid;
+          p.setY(i, h);
+          const schnee = smooth(2300, 2700, h + 300 * vnoise(x / 700, z / 700));
+          const fels = [0.36, 0.38, 0.4], gruen = [0.2, 0.3, 0.16];
+          let c = h < 1400 ? gruen : fels;
+          c = c.map((v, k) => lerp(v, 0.95, schnee));
+          farben.push(...c);
+        }
+        g.setAttribute("color", new THREE.Float32BufferAttribute(farben, 3));
+        g.computeVertexNormals();
+        const alpen = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }));
+        alpen.position.set(0, -200, -62000);
+        land.add(alpen);
+      }
+
+      // ---------- Hilfen ----------
+      const std = (c, r = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...extra });
+      const add = (geo, mat, x, y, z, ziel) => {
+        const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+        m.castShadow = true; m.receiveShadow = true;
+        ziel.add(m); return m;
+      };
+      const box = (w, h, d, mat, x, y, z, ziel) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, ziel);
+      const kugel = (r, mat, x, y, z, ziel, sx = 1, sy = 1, sz = 1) => { const m = add(new THREE.SphereGeometry(r, 32, 20), mat, x, y, z, ziel); m.scale.set(sx, sy, sz); return m; };
+      const zyl = (rt, rb, h, mat, x, y, z, ziel, seg = 24) => add(new THREE.CylinderGeometry(rt, rb, h, seg), mat, x, y, z, ziel);
+      // Walmdach: viereckiger Pyramidenstumpf
+      const walm = (w, d, h, oben, mat, x, y, z, ziel) => {
+        const g = new THREE.CylinderGeometry(oben * Math.SQRT1_2, Math.SQRT1_2, h, 4, 1);
+        g.rotateY(Math.PI / 4);
+        const m = add(g, mat, x, y + h / 2, z, ziel);
+        m.scale.set(w, 1, d);
+        return m;
+      };
+
+      // ---------- Materialien ----------
+      const SANDSTEIN = "#a9a68c"; // Berner Sandstein, leicht grünlich
+      const fassadeTex = (art) => canvasTex(256, 512, (g, w, h) => {
+        g.fillStyle = SANDSTEIN; g.fillRect(0, 0, w, h);
+        for (let k = 0; k < 1400; k++) {
+          const l = rnd();
+          g.fillStyle = `rgba(${l < 0.5 ? "60,58,40" : "230,228,205"},${0.03 + rnd() * 0.05})`;
+          g.fillRect(rnd() * w, rnd() * h, 2 + rnd() * 30, 1 + rnd() * 5);
+        }
+        // Fugen
+        g.strokeStyle = "rgba(70,68,52,0.25)"; g.lineWidth = 1.5;
+        for (let y = 0; y < h; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+        // Gesimse
+        g.fillStyle = "#c4c1a6";
+        for (const y of [0.055, 0.34, 0.37, 0.64, 0.97]) g.fillRect(0, h * y, w, h * 0.02);
+        g.fillStyle = "rgba(40,38,28,0.35)";
+        for (const y of [0.075, 0.39, 0.66]) g.fillRect(0, h * y, w, h * 0.006);
+        // Sockel mit Rustika
+        g.fillStyle = "#8f8c74"; g.fillRect(0, h * 0.97, w, h * 0.03);
+        const glas = (x, y, b, hh, bogen) => {
+          g.fillStyle = "#e6e2c8"; // Einfassung
+          g.fillRect(x - 6, y - 6, b + 12, hh + 10);
+          if (bogen) { g.beginPath(); g.arc(x + b / 2, y, b / 2 + 6, Math.PI, 0); g.fill(); }
+          const gr = g.createLinearGradient(0, y, 0, y + hh);
+          gr.addColorStop(0, "#2b3440"); gr.addColorStop(0.5, "#46525e"); gr.addColorStop(1, "#1e252c");
+          g.fillStyle = gr; g.fillRect(x, y, b, hh);
+          if (bogen) { g.beginPath(); g.arc(x + b / 2, y, b / 2, Math.PI, 0); g.fill(); }
+          g.fillStyle = "#d9d5bc"; g.fillRect(x + b / 2 - 2, y - (bogen ? b / 2 : 0), 4, hh + (bogen ? b / 2 : 0)); g.fillRect(x, y + hh * 0.42, b, 4);
+        };
+        if (art === "portal") {
+          // drei grosse Rundbogen-Portale im Erdgeschoss
+          g.fillStyle = "#24282c";
+          g.fillRect(w * 0.18, h * 0.74, w * 0.64, h * 0.23);
+          g.beginPath(); g.arc(w * 0.5, h * 0.74, w * 0.32, Math.PI, 0); g.fill();
+          g.fillStyle = "#e6e2c8"; g.fillRect(w * 0.18 - 8, h * 0.74, 8, h * 0.23); g.fillRect(w * 0.82, h * 0.74, 8, h * 0.23);
+          glas(w * 0.26, h * 0.12, w * 0.48, h * 0.18, true);
+          glas(w * 0.26, h * 0.42, w * 0.48, h * 0.18, true);
+          return;
+        }
+        // Fensterachse: Erdgeschoss Rundbogen, zwei Obergeschosse, Mezzanin
+        glas(w * 0.3, h * 0.79, w * 0.4, h * 0.13, true);
+        glas(w * 0.3, h * 0.45, w * 0.4, h * 0.16, art === "haupt");
+        g.fillStyle = "#c9c6ab"; g.beginPath(); g.moveTo(w * 0.24, h * 0.43); g.lineTo(w * 0.5, h * 0.4); g.lineTo(w * 0.76, h * 0.43); g.fill(); // Verdachung
+        glas(w * 0.3, h * 0.15, w * 0.4, h * 0.15, false);
+        glas(w * 0.34, h * 0.085, w * 0.32, h * 0.035, false);
+      }, true);
+      const texNormal = fassadeTex("normal"), texHaupt = fassadeTex("haupt"), texPortal = fassadeTex("portal");
+      const matCache = new Map();
+      const fassMat = (tex, rx) => {
+        const k = tex.uuid + rx.toFixed(1);
+        if (!matCache.has(k)) {
+          const t = tex.clone(); t.wrapS = THREE.RepeatWrapping; t.repeat.set(rx, 1); t.needsUpdate = true;
+          matCache.set(k, std(0xffffff, 0.85, { map: t }));
+        }
+        return matCache.get(k);
+      };
+      const M = {
+        stein: std(SANDSTEIN, 0.85),
+        steinHell: std(0xc9c6ab, 0.8),
+        kupfer: std(0x5f9a86, 0.55, { metalness: 0.35 }),
+        kupferHell: std(0x7fb7a2, 0.5, { metalness: 0.35 }),
+        dach: std(0x48544f, 0.7, { metalness: 0.2 }),
+        gold: std(0xd9a73a, 0.3, { metalness: 0.9 }),
+        dunkel: std(0x1d2024, 0.5, { metalness: 0.4 }),
+      };
+      // Block mit Fensterfassade (Achsbreite ca. 6 m)
+      const block = (w, h, d, x, z, ziel, tex = texNormal) => {
+        const mats = [fassMat(tex, Math.max(1, Math.round(d / 6))), fassMat(tex, Math.max(1, Math.round(d / 6))), M.stein, M.stein,
+          fassMat(tex, Math.max(1, Math.round(w / 6))), fassMat(tex, Math.max(1, Math.round(w / 6)))];
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats);
+        m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true;
+        ziel.add(m);
+        return m;
+      };
+
+      // =====================================================================
+      // Das Bundeshaus (Parlamentsgebäude mit Kuppel, West- und Ostflügel)
+      // =====================================================================
+      const platz = new THREE.Group();
+      land.add(platz);
+      const FZ = -80; // Nordfassade
+      {
+        const B = platz;
+        // Mittelbau
+        block(66, 24, 46, 0, FZ - 23, B, texHaupt);
+        walm(68, 48, 6, 0.55, M.dach, 0, 24, FZ - 23, B);
+        // Eckpavillons mit Kupferhauben
+        for (const sx of [-1, 1]) {
+          block(16, 27, 16, sx * 28, FZ - 7.5, B, texHaupt);
+          walm(17, 17, 6.5, 0.25, M.kupfer, sx * 28, 27, FZ - 7.5, B);
+          box(1.2, 2.2, 1.2, M.steinHell, sx * 28, 34.6, FZ - 7.5, B);
+        }
+        // Mittelrisalit mit drei Portalen, Säulen und Giebel
+        block(26, 28, 6, 0, FZ + 2.5, B, texPortal);
+        for (const sx of [-1, 1]) for (const k of [0, 1, 2]) {
+          const x = sx * (4.6 + k * 3.7);
+          zyl(0.55, 0.62, 13, M.steinHell, x, 17.5, FZ + 6.2, B);
+          box(1.6, 0.8, 1.6, M.steinHell, x, 11, FZ + 6.2, B);
+          box(1.6, 0.9, 1.6, M.steinHell, x, 24.4, FZ + 6.2, B);
+        }
+        box(27, 1.4, 2.4, M.steinHell, 0, 25.4, FZ + 5.6, B);
+        {
+          const s = new THREE.Shape();
+          s.moveTo(-13.5, 0); s.lineTo(13.5, 0); s.lineTo(0, 6.2); s.lineTo(-13.5, 0);
+          const gm = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 7, bevelEnabled: true, bevelSize: 0.4, bevelThickness: 0.3, bevelSegments: 1 }), M.stein);
+          gm.position.set(0, 26.1, FZ - 1.2); gm.castShadow = gm.receiveShadow = true; B.add(gm);
+          // Figurengruppe im Giebel (angedeutet) und Akroterien
+          for (const [x, y, s2] of [[0, 28.4, 1.3], [-3.2, 27.3, 0.9], [3.2, 27.3, 0.9], [-6.5, 26.8, 0.7], [6.5, 26.8, 0.7]]) kugel(s2, M.steinHell, x, y, FZ + 5.4, B, 0.8, 1.3, 0.5);
+          kugel(1.0, M.steinHell, 0, 33, FZ + 2.5, B, 0.8, 1.6, 0.8);
+        }
+        // Freitreppe vor den Portalen
+        for (let k = 0; k < 6; k++) box(30 - k * 0.8, 0.18, 2.4 - 0.0, M.steinHell, 0, 0.09 + k * 0.18, FZ + 9.6 - k * 0.45, B);
+        // Tambour, Kuppel, Laterne, Fahne
+        const KZ = FZ - 24;
+        zyl(13.5, 13.5, 3, M.steinHell, 0, 31.5, KZ, B, 48);
+        {
+          const t = texHaupt.clone(); t.wrapS = THREE.RepeatWrapping; t.repeat.set(12, 1); t.needsUpdate = true;
+          const tamb = zyl(12.2, 12.2, 9, std(0xffffff, 0.85, { map: t }), 0, 37.5, KZ, B, 48);
+        }
+        zyl(13, 12.4, 1.2, M.steinHell, 0, 42.4, KZ, B, 48);
+        for (let k = 0; k < 16; k++) { // Säulen am Tambour
+          const a = (k / 16) * Math.PI * 2;
+          zyl(0.4, 0.45, 9, M.steinHell, Math.sin(a) * 12.9, 37.5, KZ + Math.cos(a) * 12.9, B, 10);
+        }
+        const profil = [];
+        for (let k = 0; k <= 24; k++) {
+          const u = k / 24, a = u * Math.PI / 2;
+          profil.push(new THREE.Vector2(12.2 * Math.cos(a) * (1 - 0.18 * u * u) + 0.01, 43 + 15.5 * Math.sin(a)));
+        }
+        const kuppel = new THREE.Mesh(new THREE.LatheGeometry(profil, 64), M.kupfer);
+        kuppel.position.set(0, 0, KZ); kuppel.castShadow = kuppel.receiveShadow = true; B.add(kuppel);
+        // Rippen
+        for (let k = 0; k < 16; k++) {
+          const a = (k / 16) * Math.PI * 2 + Math.PI / 16;
+          const kurve = new THREE.CatmullRomCurve3(profil.filter((_, i) => i % 3 === 0).map((p) => v3(Math.sin(a) * (p.x + 0.12), p.y, KZ + Math.cos(a) * (p.x + 0.12))));
+          const rp = new THREE.Mesh(new THREE.TubeGeometry(kurve, 30, 0.22, 6), M.kupferHell);
+          rp.castShadow = true; B.add(rp);
+        }
+        // Dachfenster (Lukarnen) in der Kuppel
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          const l = box(1.4, 2.0, 1.2, M.kupferHell, Math.sin(a) * 10.9, 48, KZ + Math.cos(a) * 10.9, B);
+          l.rotation.y = a;
+        }
+        zyl(2.6, 2.6, 4.5, M.steinHell, 0, 60.6, KZ, B, 24);
+        for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; zyl(0.18, 0.18, 4.5, M.dunkel, Math.sin(a) * 2.75, 60.6, KZ + Math.cos(a) * 2.75, B, 6); }
+        add(new THREE.SphereGeometry(2.9, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.kupfer, 0, 62.8, KZ, B).scale.y = 0.75;
+        kugel(0.45, M.gold, 0, 65.2, KZ, B);
+        zyl(0.09, 0.12, 9, M.dunkel, 0, 69.5, KZ, B, 8);
+        // Flügel (Bundeshaus West und Ost) mit Verbindungsbauten
+        for (const sx of [-1, 1]) {
+          block(30, 20, 14, sx * 50, FZ - 22, B);                 // Verbindungstrakt
+          walm(31, 15, 4.5, 0.4, M.dach, sx * 50, 20, FZ - 22, B);
+          block(72, 24, 22, sx * 101, FZ - 18, B, texHaupt);       // Flügel
+          walm(73, 23, 6, 0.5, M.dach, sx * 101, 24, FZ - 18, B);
+          block(20, 27, 26, sx * 101, FZ - 16, B, texHaupt);       // Mittelrisalit des Flügels
+          zyl(4.5, 4.5, 4, M.steinHell, sx * 101, 29, FZ - 16, B, 24);
+          add(new THREE.SphereGeometry(4.6, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.kupfer, sx * 101, 31, FZ - 16, B).scale.y = 1.2;
+          kugel(0.5, M.gold, sx * 101, 36.8, FZ - 16, B);
+          block(24, 24, 40, sx * 125, FZ - 45, B);                  // Seitentrakte nach Süden
+          walm(25, 41, 5, 0.45, M.dach, sx * 125, 24, FZ - 45, B);
+        }
+        // Bundesterrasse im Süden
+        box(320, 1.2, 40, M.steinHell, 0, 0.0, FZ - 70, B);
+      }
+
+      // ---------- Schweizer Fahne auf der Kuppel ----------
+      const fahneTex = canvasTex(256, 256, (g, w, h) => {
+        g.fillStyle = "#d52b1e"; g.fillRect(0, 0, w, h);
+        g.fillStyle = "#ffffff";
+        const a = w / 32;
+        g.fillRect(13 * a, 6 * a, 6 * a, 20 * a);
+        g.fillRect(6 * a, 13 * a, 20 * a, 6 * a);
+      });
+      const fahneGeo = new THREE.PlaneGeometry(4.2, 4.2, 24, 12);
+      fahneGeo.translate(2.1, 0, 0);
+      const fahneBasis = fahneGeo.attributes.position.array.slice();
+      const fahne = new THREE.Mesh(fahneGeo, std(0xffffff, 0.8, { map: fahneTex, side: THREE.DoubleSide }));
+      fahne.position.set(0.1, 71.6, FZ - 24); fahne.rotation.y = 0.5; fahne.castShadow = true;
+      platz.add(fahne);
+
+      // ---------- Bundesplatz: Granitplatten, Wasserspiele ----------
+      {
+        const platten = canvasTex(512, 512, (g, w, h) => {
+          g.fillStyle = "#9c9890"; g.fillRect(0, 0, w, h);
+          for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) {
+            const l = 140 + rnd() * 30;
+            g.fillStyle = `rgb(${l},${l - 3},${l - 8})`;
+            g.fillRect(i * 32 + 1, j * 32 + 1, 30, 30);
+          }
+          for (let k = 0; k < 4000; k++) { g.fillStyle = `rgba(${rnd() < 0.5 ? "60,60,60" : "230,230,230"},0.25)`; g.fillRect(rnd() * w, rnd() * h, 1.5, 1.5); }
+        });
+        platten.wrapS = platten.wrapT = THREE.RepeatWrapping; platten.repeat.set(12, 10);
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(190, 110), std(0xffffff, 0.75, { map: platten }));
+        p.rotation.x = -Math.PI / 2; p.position.set(0, 0.03, -28); p.receiveShadow = true;
+        platz.add(p);
+      }
+      // Gebäude rund um den Platz (Nationalbank, Kantonalbank, Häuserzeilen)
+      for (const [w, h, d, x, z] of [[40, 22, 30, 112, -40], [40, 22, 30, -112, -40], [60, 21, 26, 112, 18], [60, 21, 26, -112, 18], [70, 20, 24, 0, 52], [60, 20, 24, 70, 52], [60, 20, 24, -70, 52]]) {
+        block(w, h, d, x, z, platz);
+        walm(w + 1, d + 1, 5, 0.35, std(0x8e4a32, 0.85), x, h, z, platz);
+      }
+      // 26 Wasserdüsen, je eine pro Kanton
+      const duesen = [];
+      const strahlMat = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, emissive: 0x9fb8cc, emissiveIntensity: 0.5, transparent: true, opacity: 0.32, roughness: 0.1, depthWrite: false });
+      const strahlGeo = new THREE.CylinderGeometry(0.035, 0.15, 1, 10, 1, true);
+      strahlGeo.translate(0, 0.5, 0);
+      for (let r = 0; r < 2; r++) for (let k = 0; k < 13; k++) {
+        const x = (k - 6) * 4.2, z = -42 - r * 6;
+        box(0.5, 0.02, 0.5, M.dunkel, x, 0.04, z, platz).castShadow = false;
+        const m = new THREE.Mesh(strahlGeo, strahlMat);
+        m.position.set(x, 0.05, z); m.scale.set(1, 0.001, 1);
+        platz.add(m);
+        const krone = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), strahlMat);
+        krone.scale.y = 0.6;
+        platz.add(krone);
+        duesen.push({ m, krone, i: r * 13 + k, k, r });
+      }
+      // Gischt-Tropfen
+      const gischtMat = new THREE.PointsMaterial({ color: 0xf2f8ff, size: 0.07, transparent: true, opacity: 0, depthWrite: false });
+      const gischtGeo = new THREE.BufferGeometry();
+      const GISCHT = 5200, gischtInfo = [];
+      gischtGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(GISCHT * 3), 3));
+      for (let i = 0; i < GISCHT; i++) gischtInfo.push([Math.floor(rnd() * 26), rnd(), rnd() * 6.28, 0.3 + rnd() * 0.7]);
+      const gischt = new THREE.Points(gischtGeo, gischtMat);
+      gischt.frustumCulled = false;
+      platz.add(gischt);
+
+      // ---------- Altstadt und Quartiere: Häuser mit roten Ziegeldächern ----------
+      {
+        const haeuser = [];
+        const frei = (x, z) => !(Math.abs(x) < 180 && z > FZ - 120 && z < 75);
+        // Altstadt: lange Häuserzeilen in Ost-West-Richtung (Gassen)
+        for (let z = -200; z < 560; z += 34) {
+          for (let x = 120; x > -1440;) {
+            const b = 8 + rnd() * 8;
+            if (altstadt(x, z) && frei(x, z) && rnd() < 0.97) for (const dz of [-7.5, 7.5]) haeuser.push([x, z + dz, b - 0.4, 13 + rnd() * 5, 14 + rnd() * 3, 0]);
+            x -= b;
+          }
+        }
+        // Grössere Bauten im Westen (Bahnhof-Quartier) und Quartiere ringsum
+        for (let k = 0; k < 9000; k++) {
+          const a = rnd() * Math.PI * 2, r = 200 + Math.pow(rnd(), 0.7) * 3600;
+          const x = Math.cos(a) * r, z = Math.sin(a) * r;
+          if (altstadt(x, z) || !frei(x, z) || aareDist(x, z) < 160) continue;
+          if (rnd() > 1 - smooth(1400 + 900 * fbm(x / 900, z / 900, 2), 4200, r) + 0.05) continue;
+          const gross = r < 900 ? 1.4 : 1;
+          haeuser.push([x, z, (10 + rnd() * 14) * gross, (8 + rnd() * 10) * gross, (10 + rnd() * 12) * gross, rnd() * 3.14]);
+        }
+        const koerperGeo = new THREE.BoxGeometry(1, 1, 1); koerperGeo.translate(0, 0.5, 0);
+        const dachGeo = new THREE.CylinderGeometry(0.0001, 1, 1, 4, 1); // Satteldach als flache Pyramide gestreckt
+        dachGeo.rotateY(Math.PI / 4); dachGeo.translate(0, 0.5, 0);
+        const ik = new THREE.InstancedMesh(koerperGeo, std(0xffffff, 0.85), haeuser.length);
+        const id = new THREE.InstancedMesh(dachGeo, std(0xffffff, 0.8), haeuser.length);
+        const dm = new THREE.Object3D(), col = new THREE.Color();
+        haeuser.forEach(([x, z, b, h, d, rot], i) => {
+          const y = hoehe(x, z);
+          dm.position.set(x, y, z); dm.rotation.set(0, rot, 0); dm.scale.set(b, h, d); dm.updateMatrix();
+          ik.setMatrixAt(i, dm.matrix);
+          const s = 0.85 + rnd() * 0.25;
+          col.set(rnd() < 0.6 ? 0xb3ad92 : rnd() < 0.5 ? 0xd6cfbd : 0xc9b99a).multiplyScalar(s);
+          ik.setColorAt(i, col);
+          dm.position.y = y + h; dm.scale.set(b * 0.74, 4 + rnd() * 2.5, d * 0.74 * 1.0); dm.updateMatrix();
+          id.setMatrixAt(i, dm.matrix);
+          col.set(rnd() < 0.8 ? 0x9a4a2e : 0x7a3c28).multiplyScalar(0.8 + rnd() * 0.35);
+          id.setColorAt(i, col);
+        });
+        ik.castShadow = id.castShadow = true; ik.receiveShadow = id.receiveShadow = true;
+        land.add(ik); land.add(id);
+      }
+
+      // ---------- Münster und Zytglogge (Wahrzeichen in der Altstadt) ----------
+      {
+        const g = new THREE.Group(); g.position.set(-430, 0, -120); g.rotation.y = 0.08; land.add(g);
+        block(22, 24, 70, 0, 0, g);
+        walm(23, 71, 10, 0.05, std(0x7a6e62, 0.85), 0, 24, 0, g);
+        block(14, 62, 14, 0, 42, g);
+        zyl(2, 6.5, 38, M.stein, 0, 81, 42, g, 8);
+      }
+      {
+        const g = new THREE.Group(); g.position.set(-560, 0, 120); land.add(g);
+        block(12, 34, 12, 0, 0, g);
+        walm(13, 13, 14, 0.05, std(0x8e4a32, 0.85), 0, 34, 0, g);
+      }
+
+      // ---------- Bäume (Laubbäume) ----------
+      {
+        const kroneGeo = new THREE.IcosahedronGeometry(1, 1);
+        kroneGeo.translate(0, 1.4, 0);
+        const stammGeo = new THREE.CylinderGeometry(0.12, 0.16, 1.2, 6); stammGeo.translate(0, 0.6, 0);
+        const baeume = [];
+        for (let k = 0; k < 160000 && baeume.length < 30000; k++) {
+          const r = 60 + Math.pow(rnd(), 1.3) * 4500, a = rnd() * Math.PI * 2;
+          const x = Math.cos(a) * r, z = Math.sin(a) * r;
+          if (Math.abs(x) < 190 && z > FZ - 130 && z < 75) continue;
+          const d = aareDist(x, z);
+          if (d < 52) continue;
+          const hang = d < 160;
+          const imWald = wald(x, z) > 0.53 && r > 900;
+          const park = rnd() < 0.2 && !altstadt(x, z);
+          if (!hang && !imWald && !park) continue;
+          baeume.push([x, hoehe(x, z), z, 4 + rnd() * 5]);
+        }
+        // Bäume auf der Bundesterrasse
+        for (let x = -150; x <= 150; x += 9) baeume.push([x, 0, FZ - 78, 5.5]);
+        const ik = new THREE.InstancedMesh(kroneGeo, std(0xffffff, 0.9, { flatShading: true }), baeume.length);
+        const is = new THREE.InstancedMesh(stammGeo, std(0x3c2c20, 0.9), baeume.length);
+        const dm = new THREE.Object3D(), col = new THREE.Color();
+        baeume.forEach(([x, y, z, s], i) => {
+          dm.position.set(x, y - 0.3, z); dm.rotation.set(0, rnd() * 6.28, 0); dm.scale.set(s * 0.55, s * 0.7, s * 0.55); dm.updateMatrix();
+          ik.setMatrixAt(i, dm.matrix); is.setMatrixAt(i, dm.matrix);
+          col.setRGB(0.16 + rnd() * 0.1, 0.3 + rnd() * 0.12, 0.1 + rnd() * 0.05);
+          ik.setColorAt(i, col);
+        });
+        ik.castShadow = true; ik.receiveShadow = true;
+        land.add(ik); land.add(is);
+      }
+
+      // =====================================================================
+      // Jean Hutmacher (stilisierte Figur in Mantel, Schal und Hut)
+      // =====================================================================
+      const person = new THREE.Group();
+      person.position.set(0.75, 0.03, 2);
+      platz.add(person);
+      const MANTEL = std(0x3a3f4a, 0.75), HOSE = std(0x22252b, 0.7), SCHUH = std(0x1a1410, 0.35);
+      const HAUT = std(0xe7b996, 0.6), SCHAL = std(0xc8211b, 0.85), HUT = std(0x5a4632, 0.7), HUTBAND = std(0x1a1a1a, 0.5);
+      const koerper = new THREE.Group();
+      person.add(koerper);
+      for (const sx of [-1, 1]) {
+        kugel(0.075, SCHUH, sx * 0.11, 0.05, 0.05, koerper, 0.9, 0.6, 1.7);
+        add(new THREE.CapsuleGeometry(0.075, 0.72, 6, 12), HOSE, sx * 0.11, 0.48, 0, koerper);
+      }
+      const mantelProfil = [[0.0, 0.58], [0.28, 0.58], [0.27, 0.8], [0.25, 1.05], [0.24, 1.25], [0.25, 1.38], [0.22, 1.47], [0.12, 1.52], [0.0, 1.53]].map(([r, y]) => new THREE.Vector2(r, y));
+      const mantel = add(new THREE.LatheGeometry(mantelProfil, 32), MANTEL, 0, 0, 0, koerper);
+      mantel.scale.set(1, 1, 0.72);
+      // Mantelkante und Knöpfe
+      box(0.025, 0.85, 0.02, std(0x2b2f37, 0.7), 0.02, 1.0, 0.185, koerper);
+      for (const y of [0.92, 1.08, 1.24]) kugel(0.014, HUTBAND, 0.055, y, 0.19, koerper);
+      // Schal
+      add(new THREE.TorusGeometry(0.1, 0.045, 10, 20), SCHAL, 0, 1.52, 0.0, koerper).rotation.x = Math.PI / 2;
+      box(0.08, 0.32, 0.03, SCHAL, -0.06, 1.34, 0.19, koerper).rotation.z = 0.08;
+      // Kopf
+      const kopf = new THREE.Group();
+      kopf.position.set(0, 1.67, 0.01);
+      koerper.add(kopf);
+      add(new THREE.CylinderGeometry(0.05, 0.055, 0.1, 12), HAUT, 0, -0.08, 0, kopf);
+      kugel(0.105, HAUT, 0, 0.03, 0, kopf, 0.92, 1.12, 1.0);
+      for (const sx of [-1, 1]) {
+        kugel(0.012, std(0x1a1410, 0.3), sx * 0.035, 0.05, 0.095, kopf);
+        box(0.04, 0.008, 0.01, std(0x4a3a2a, 0.8), sx * 0.036, 0.078, 0.095, kopf);
+        kugel(0.022, HAUT, sx * 0.1, 0.03, 0, kopf, 0.5, 1, 0.8);
+      }
+      kugel(0.018, HAUT, 0, 0.02, 0.105, kopf, 0.8, 1.1, 1);
+      box(0.04, 0.006, 0.01, std(0xa0625a, 0.6), 0, -0.025, 0.098, kopf);
+      const HAAR = std(0x3b2c22, 0.9);
+      kugel(0.1, HAAR, 0, 0.07, -0.02, kopf, 0.95, 0.75, 1.0); // Haar am Hinterkopf
+      kugel(0.1, HAAR, 0, 0.085, 0.0, kopf, 0.98, 0.62, 1.04);  // Haar oben
+      // Hut (Fedora) – sitzt erst auf dem Kopf, wird später mit der Hand gelüftet
+      const hut = new THREE.Group();
+      platz.add(hut);
+      add(new THREE.CylinderGeometry(0.17, 0.17, 0.012, 32), HUT, 0, 0, 0, hut);
+      add(new THREE.CylinderGeometry(0.095, 0.11, 0.12, 24), HUT, 0, 0.06, 0, hut);
+      add(new THREE.CylinderGeometry(0.111, 0.112, 0.03, 24), HUTBAND, 0, 0.02, 0, hut);
+      kugel(0.095, HUT, 0, 0.115, 0, hut, 1, 0.25, 1);
+      // Arme
+      const arm = (sx) => {
+        const s = new THREE.Group();
+        s.position.set(sx * 0.25, 1.42, 0);
+        koerper.add(s);
+        kugel(0.08, MANTEL, 0, 0, 0, s);
+        add(new THREE.CapsuleGeometry(0.065, 0.5, 6, 12), MANTEL, 0, -0.3, 0, s);
+        kugel(0.045, HAUT, 0, -0.62, 0.0, s, 0.8, 1.15, 0.7);
+        const hand = new THREE.Object3D(); hand.position.set(0, -0.66, 0); s.add(hand);
+        return { s, hand };
+      };
+      const armR = arm(-1), armL = arm(1);
+
+      // =====================================================================
+      // 3) WOLKEN-DURCHFLUG (Bildschirm-Ebene)
+      // =====================================================================
+      const flug = new THREE.Scene();
+      const flugCam = new THREE.OrthographicCamera(-0.5625, 0.5625, 1, -1, 0, 10);
+      const fetzen = [];
+      for (let i = 0; i < 14; i++) {
+        const t = texWolken.clone();
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(0.06, 0.06);
+        t.offset.set([0.12, 0.31, 0.58, 0.77, 0.05, 0.44][i % 6] + rnd() * 0.05, 0.25 + rnd() * 0.5);
+        t.needsUpdate = true;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({
+          color: 0xffffff, alphaMap: t, transparent: true, depthTest: false, depthWrite: false, opacity: 0,
+        }));
+        m.rotation.z = rnd() * Math.PI * 2;
+        flug.add(m);
+        fetzen.push({ m, start: 2.55 + i * 0.075 + rnd() * 0.08, dauer: 0.55 + rnd() * 0.35, x: (rnd() - 0.5) * 0.7, y: (rnd() - 0.5) * 1.1, s: 1.4 + rnd() * 1.6 });
+      }
+      const schleier = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthTest: false, opacity: 0 }));
+      flug.add(schleier);
+
+      // ---------- Wolkenschichten über Bern ----------
+      const schichten = [];
+      for (const [hY, ox, oy, op] of [[9000, 0.42, 0.11, 0.75], [6500, 0.15, 0.52, 0.6], [4200, 0.63, 0.3, 0.45]]) {
+        const t = texWolken.clone();
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(0.09, 0.18); t.offset.set(ox, oy); t.needsUpdate = true;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(40000, 40000), new THREE.MeshBasicMaterial({
+          color: 0xffffff, alphaMap: t, transparent: true, depthWrite: false, fog: false, opacity: op,
+        }));
+        m.rotation.x = -Math.PI / 2;
+        m.position.set(2500 - hY * 0.2, hY, -1500 + hY * 0.1);
+        land.add(m);
+        schichten.push({ m, hY, op });
+      }
+
+      // =====================================================================
+      // Nachbearbeitung
+      // =====================================================================
+      const composer = new EffectComposer(renderer);
+      composer.setPixelRatio(1);
+      composer.setSize(1080, 1920);
+      const hauptPass = new RenderPass(globus, globusCam);
+      composer.addPass(hauptPass);
+      const flugPass = new RenderPass(flug, flugCam);
+      flugPass.clear = false;
+      flugPass.clearDepth = true;
+      composer.addPass(flugPass);
+      composer.addPass(new ShaderPass({
+        uniforms: { tDiffuse: { value: null } },
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform sampler2D tDiffuse; varying vec2 vUv;
+          void main() {
+            vec4 c = texture2D(tDiffuse, vUv);
+            bool ok = c.r == c.r && c.g == c.g && c.b == c.b && max(max(c.r, c.g), c.b) < 60000.0;
+            gl_FragColor = ok ? c : vec4(0.0, 0.0, 0.0, 1.0);
+          }`,
+      }));
+      const bloom = new UnrealBloomPass(new THREE.Vector2(540, 960), 0.3, 0.5, 0.92);
+      composer.addPass(bloom);
+      composer.addPass(new OutputPass());
+
+      // =====================================================================
+      // Zeitachse
+      // =====================================================================
+      const WECHSEL = 3.25;
+      const START_H = 22000, ENDE_H = 320;
+      const ziel = latLon(ZIEL.lat, ZIEL.lon);
+      const START_PKT = v3(-150, 0, -60);       // Mitte zwischen Altstadt und Bundeshaus
+      const END_PKT = v3(0, 9.3, -44);         // Blickpunkt in der Schlusseinstellung
+      const nameEl = document.getElementById("name");
+      const balkenEl = nameEl.querySelector(".balken");
+      const hutKopf = new THREE.Vector3(), hutHand = new THREE.Vector3(), q = new THREE.Quaternion();
+
+      const renderAt = (t) => {
+        for (const f of fetzen) {
+          const x = clamp((t - f.start) / f.dauer);
+          const sichtbar = x > 0 && x < 1;
+          f.m.visible = sichtbar;
+          if (!sichtbar) continue;
+          const s = f.s * (0.5 + x * 2.6);
+          f.m.scale.set(s, s, 1);
+          f.m.position.set(f.x * (1 + x * 1.5), f.y * (1 + x * 1.5), 0);
+          f.m.material.opacity = Math.sin(x * Math.PI) * 0.95;
+          f.m.material.color.setRGB(0.95, 0.96, 0.98);
+        }
+        schleier.material.opacity = smooth(2.95, 3.22, t) * (1 - smooth(3.28, 3.75, t)) * 0.9;
+        schleier.material.color.setRGB(0.93, 0.95, 0.97);
+
+        if (t < WECHSEL) {
+          // ----- Globus -----
+          const s = clamp(t / WECHSEL);
+          const hoch = Math.exp(Math.log(5.6) + (Math.log(0.05) - Math.log(5.6)) * Math.pow(s, 2.1));
+          const w = smooth(0.0, 2.9, t);
+          const lat = lerp(22, ZIEL.lat, w), lon = lerp(-28, ZIEL.lon, w);
+          globusCam.position.copy(latLon(lat, lon).multiplyScalar(1 + hoch));
+          const blick = v3(0, 0, 0).lerp(ziel, smooth(1.4, 0.12, hoch));
+          globusCam.up.set(0, 1, 0);
+          globusCam.lookAt(blick);
+          globusCam.near = Math.max(0.0004, hoch * 0.2);
+          globusCam.far = 200;
+          globusCam.updateProjectionMatrix();
+          wolken.rotation.y = t * 0.004;
+          bloom.strength = 0.6; bloom.threshold = 0.8; bloom.radius = 0.55;
+          hauptPass.scene = globus; hauptPass.camera = globusCam;
+        } else {
+          // ----- Bern -----
+          const s = clamp((t - WECHSEL) / (6.9 - WECHSEL));
+          const e = 1 - Math.pow(1 - s, 2.2);
+          const absenk = Math.exp(Math.log(START_H) + (Math.log(ENDE_H) - Math.log(START_H)) * e);
+          const kipp = smooth(6.15, 9.4, t);
+          const dist = t < 6.9 ? absenk : lerp(ENDE_H, 52, Math.pow(smooth(6.9, 9.6, t), 0.75));
+          const el = lerp(89.6, -8.5, kipp) * D2R;
+          const az = lerp(-70, 0, smooth(WECHSEL, 8.8, t)) * D2R;
+          const kh = smooth(5.6, 8.6, t); // seitlich früher auf Kurs, damit Jean im Bild ist
+          const zielPkt = v3(lerp(START_PKT.x, END_PKT.x, kh), lerp(START_PKT.y, END_PKT.y, kipp), lerp(START_PKT.z, END_PKT.z, kh));
+          const off = v3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(dist);
+          const naeher = smooth(9.4, 12, t) * 0.5; // langsames Heranschweben
+          kam.position.copy(zielPkt).add(off).add(v3(0, 0, -naeher));
+          if (kam.position.y < 1.55) kam.position.y = 1.55;
+          kam.up.set(0, 1, 0);
+          kam.lookAt(zielPkt.clone().add(v3(0, 0, -naeher)));
+          kam.fov = lerp(38, 52, smooth(6.6, 9.4, t));
+          const camH = kam.position.y;
+          kam.near = clamp(camH * 0.004, 0.05, 40);
+          kam.far = 200000;
+          kam.updateProjectionMatrix();
+          himmel.position.copy(kam.position);
+          land.fog.density = lerp(0.000045, 0.000016, smooth(4000, 300, camH));
+
+          for (const sc of schichten) {
+            const ueber = camH - sc.hY;
+            sc.m.material.opacity = sc.op * smooth(0, 2500, ueber);
+            sc.m.visible = ueber > 0;
+          }
+
+          // Schattenkamera folgt dem Ausschnitt (aus der Höhe gross, am Platz fein)
+          const sk = lerp(1800, 140, smooth(2000, 200, camH));
+          Object.assign(sonne.shadow.camera, { left: -sk, right: sk, top: sk, bottom: -sk, far: 1200 + sk * 2 });
+          sonne.position.copy(sonne.target.position).addScaledVector(SONNE_L, 400 + sk);
+          sonne.shadow.camera.updateProjectionMatrix();
+
+          // Fahne weht
+          {
+            const p = fahneGeo.attributes.position;
+            for (let i = 0; i < p.count; i++) {
+              const x = fahneBasis[i * 3], y = fahneBasis[i * 3 + 1];
+              const u = x / 4.2;
+              p.setXYZ(i, x - u * u * 0.25, y - u * 0.25, Math.sin(x * 1.4 - t * 6.5 + y * 0.4) * 0.32 * u + Math.sin(x * 2.9 - t * 9.0) * 0.08 * u);
+            }
+            p.needsUpdate = true;
+            fahneGeo.computeVertexNormals();
+          }
+
+          // Wasserspiele: Düsen springen ab 7.3 s an, Muster wandern über den Platz
+          const wa = smooth(7.3, 8.0, t);
+          duesen.forEach((d) => {
+            const welle = 0.55 + 0.45 * Math.sin(t * 2.2 - d.k * 0.55 + d.r * 1.3);
+            const h = Math.max(0.001, wa * smooth(7.3 + d.k * 0.04, 7.6 + d.k * 0.04, t) * (1.2 + 3.6 * welle));
+            d.m.scale.set(1, h, 1);
+            d.krone.position.set(d.m.position.x, h + 0.05, d.m.position.z);
+            { const k = h > 0.05 ? 1 + 0.3 * Math.sin(t * 13 + d.i) : 0.001; d.krone.scale.set(k, k * 0.6, k); }
+            d.h = h;
+          });
+          {
+            const p = gischtGeo.attributes.position;
+            for (let i = 0; i < GISCHT; i++) {
+              const [di, ph, a, sp] = gischtInfo[i];
+              const d = duesen[di];
+              const u = (t * sp * 1.4 + ph) % 1;
+              const r = u * 1.3;
+              p.setXYZ(i, d.m.position.x + Math.cos(a) * r, d.h * (1 - u * u) + 0.05 + u * 0.3 * (1 - u), d.m.position.z + Math.sin(a) * r);
+            }
+            p.needsUpdate = true;
+            gischtMat.opacity = wa * 0.8;
+          }
+
+          // Jean: atmet, schaut sich um, lüftet zum Gruss den Hut
+          const heb = smooth(9.0, 9.6, t) * (1 - smooth(11.1, 11.7, t));
+          const gruss = Math.sin((t - 9.6) * 4.0) * smooth(9.55, 9.85, t) * (1 - smooth(10.7, 11.1, t));
+          armR.s.rotation.z = lerp(-0.06, -2.35, heb) + gruss * 0.12;
+          armR.s.rotation.x = lerp(0.0, -0.55, heb);
+          armR.s.rotation.y = lerp(0, -0.3, heb);
+          armL.s.rotation.z = 0.06 + 0.015 * Math.sin(t * 1.8);
+          armL.s.rotation.x = 0.05;
+          koerper.position.y = 0.006 * Math.sin(t * 2.0);
+          kopf.rotation.y = lerp(0.35 * Math.sin(t * 0.7), 0, smooth(8.4, 9.0, t));
+          kopf.rotation.x = -0.04 + 0.1 * Math.sin(Math.PI * smooth(9.5, 10.3, t)); // kleine Verbeugung
+          koerper.rotation.x = 0.06 * Math.sin(Math.PI * smooth(9.5, 10.3, t));
+          person.rotation.y = 0.04 * Math.sin(t * 0.5);
+          // Hut: vom Kopf in die Hand
+          person.updateMatrixWorld(true);
+          kopf.localToWorld(hutKopf.set(0, 0.115, -0.005));
+          armR.hand.localToWorld(hutHand.set(0.0, -0.02, 0.06));
+          platz.worldToLocal(hutKopf); platz.worldToLocal(hutHand);
+          const lift = smooth(9.3, 9.6, t) * (1 - smooth(11.25, 11.6, t));
+          hut.position.copy(hutKopf).lerp(hutHand, lift);
+          kopf.getWorldQuaternion(q);
+          hut.quaternion.copy(q);
+          hut.rotateX(-0.08 - lift * 0.9);
+          hut.rotateZ(lift * 0.5);
+
+          bloom.strength = 0.2; bloom.threshold = 0.95; bloom.radius = 0.4;
+          hauptPass.scene = land; hauptPass.camera = kam;
+        }
+
+        // Namenseinblendung
+        const n = smooth(9.9, 10.5, t);
+        nameEl.style.opacity = n.toFixed(3);
+        nameEl.style.transform = `translateY(${((1 - n) * 30).toFixed(1)}px)`;
+        balkenEl.style.width = `${(smooth(9.8, 10.6, t) * 150).toFixed(1)}px`;
+        composer.render();
+      };
+
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      window.__renderAt = renderAt;
+      renderAt(0);
+      window.__bernFertig();
+    </script>
+  </body>
+</html>

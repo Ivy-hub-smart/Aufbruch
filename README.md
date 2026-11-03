@@ -304,3 +304,31 @@ npm run render:santa-bg && npm run render:santa
 
 Zeitpunkte der Lichter und des Winkens stehen unten in `index.html` (`an(7.15)`, `heb`,
 `wink`), das Ziel auf der Erde oben (`ZIEL`, Breiten-/Längengrad).
+
+## Video: Earth Zoom nach Bern vor das Bundeshaus
+
+12 Sekunden im gleichen „Google-Earth-Zoom“-Stil, diesmal bei Tag: die Erde aus dem All über
+Europa, die Kamera stürzt in die Schweiz, fliegt durch die Wolken, sinkt senkrecht über die
+türkisfarbene Aareschlaufe und die roten Ziegeldächer der Berner Altstadt und kippt auf dem
+Bundesplatz auf Augenhöhe. Vor dem Bundeshaus mit der grünen Kupferkuppel und der wehenden
+Schweizer Fahne steht Jean Hutmacher in Mantel, rotem Schal und Hut. Die 26 Wasserdüsen
+(eine pro Kanton) springen an, Jean zieht zum Gruss den Hut, dann erscheint die
+Namenseinblendung „Jean Hutmacher – vor dem Bundeshaus, Bern“.
+Dazu: Weltraum-Klang, Whoosh, Höhenwind, Plätschern der Wasserspiele, Kirchenglocken aus der
+Altstadt, Tauben und ein Alphorn-Ruf mit Echo (alles eigene Synthese).
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Globus, Aare, Altstadt, Bundeshaus, Wasserspiele, Fahne, Figur, Kamera (Three.js mit Schatten) | HyperFrames + Three.js | `hyperframes/bern/index.html` |
+| Klang (lizenzfrei, eigene Synthese) | Python | `remotion/scripts/bern-sound.py` |
+| Erd-Texturen (NASA, aus dem npm-Paket `three-globe`) | – | `hyperframes/bern/assets/` |
+
+Fertiges Video: `remotion/out/earth-zoom-bern.mp4`
+
+```bash
+npm run render:bern-bg && npm run render:bern
+```
+
+Den Namen und die Zeilen der Einblendung änderst du oben in `index.html` (`<div id="name">`),
+das Ziel auf der Erde über `ZIEL` (Breiten-/Längengrad), Zeitpunkt des Hutziehens über `heb`
+und `lift` unten in der Zeitachse.
