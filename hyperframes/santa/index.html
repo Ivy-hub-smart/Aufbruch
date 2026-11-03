@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="de" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .layer { position: absolute; inset: 0; }
+      #szene { display: block; width: 1080px; height: 1920px; }
+    </style>
+    <script>
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["santa"] = new Promise((fertig) => { window.__santaFertig = fertig; });
+    </script>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+      <canvas id="szene" class="clip layer" data-start="0" data-duration="12" data-track-index="0" width="1080" height="1920"></canvas>
+    </div>
+    <script type="module">
+      import * as THREE from "./assets/three.module.js";
+      import { EffectComposer } from "./assets/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "./assets/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "./assets/addons/postprocessing/UnrealBloomPass.js";
+      import { OutputPass } from "./assets/addons/postprocessing/OutputPass.js";
+      import { ShaderPass } from "./assets/addons/postprocessing/ShaderPass.js";
+
+      // =====================================================================
+      // Earth Zoom zum Weihnachtsmann: aus dem All (NASA-Texturen, Nordlicht-
+      // Oval über der Arktis) durch die Wolken hinunter nach Lappland an den
+      // Polarkreis bei Rovaniemi. Verschneiter Wald, Dorf, Nordlicht am Himmel,
+      // vor der roten Holzhütte steht der Weihnachtsmann und winkt.
+      //   0.0 – 3.25 s  Globus, Kamera stürzt Richtung Lappland
+      //   2.7 – 3.9 s   durch die Wolken
+      //   3.25 – 6.9 s  Sinkflug senkrecht über Schnee, Wald und Dorflichter
+      //   6.2 – 9.4 s   Kamera kippt, Nordlicht, der Weihnachtsmann erscheint
+      //   7.15 – 8.6 s  Lichter gehen an, ab 7.6 s winkt er, es schneit
+      // =====================================================================
+
+      let seed = 2412;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a)); return x * x * (3 - 2 * x); };
+      const lerp = (a, b, x) => a + (b - a) * x;
+      const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+      const D2R = Math.PI / 180;
+
+      // ---------- Rauschen (deterministisch) ----------
+      const hash = (i, j) => {
+        let h = (Math.imul(i, 374761393) + Math.imul(j, 668265263)) | 0;
+        h = Math.imul(h ^ (h >>> 13), 1274126177);
+        return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+      };
+      const vnoise = (x, z) => {
+        const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+        const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+        const a = hash(xi, zi), b = hash(xi + 1, zi), c = hash(xi, zi + 1), d = hash(xi + 1, zi + 1);
+        return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+      };
+      const fbm = (x, z, o = 4) => {
+        let s = 0, a = 0.5, f = 1;
+        for (let i = 0; i < o; i++) { s += a * vnoise(x * f + i * 17.3, z * f - i * 9.1); f *= 2.03; a *= 0.5; }
+        return s;
+      };
+
+      // ---------- Renderer ----------
+      const canvas = document.getElementById("szene");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(1);
+      renderer.setSize(1080, 1920, false);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+      const loader = new THREE.TextureLoader();
+      const lade = async (f, srgb = true) => {
+        const t = await loader.loadAsync("./assets/" + f);
+        if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 8;
+        return t;
+      };
+      const [texTag, texNacht, texWasser, texRelief, texWolken, texSterne] = await Promise.all([
+        lade("earth-blue-marble.jpg"), lade("earth-night.jpg"), lade("earth-water.png", false),
+        lade("earth-topology.png", false), lade("clouds.jpg", false), lade("night-sky.jpg"),
+      ]);
+
+      const canvasTex = (w, h, zeichne, srgb = true) => {
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        zeichne(c.getContext("2d"), w, h);
+        const t = new THREE.CanvasTexture(c);
+        if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 8;
+        return t;
+      };
+      const glowTex = canvasTex(128, 128, (g, w) => {
+        const r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+        r.addColorStop(0, "rgba(255,255,255,1)");
+        r.addColorStop(0.15, "rgba(255,255,255,0.55)");
+        r.addColorStop(0.45, "rgba(255,255,255,0.12)");
+        r.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = r; g.fillRect(0, 0, w, w);
+      });
+
+      // =====================================================================
+      // 1) GLOBUS
+      // =====================================================================
+      const globus = new THREE.Scene();
+      const globusCam = new THREE.PerspectiveCamera(38, 1080 / 1920, 0.001, 200);
+      const latLon = (lat, lon) => {
+        const th = (90 - lat) * D2R, ph = (lon + 180) * D2R;
+        return v3(-Math.cos(ph) * Math.sin(th), Math.cos(th), Math.sin(ph) * Math.sin(th));
+      };
+      // Winter: Sonne über dem Südatlantik, Lappland liegt in der Polarnacht
+      const SONNE = latLon(-22, -48).normalize();
+      const ZIEL = { lat: 66.5436, lon: 25.8473 }; // Polarkreis bei Rovaniemi
+      const MAGPOL = latLon(80.7, -72.7).normalize();
+
+      const erdeMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTag: { value: texTag }, uNacht: { value: texNacht }, uWasser: { value: texWasser },
+          uRelief: { value: texRelief }, uWolken: { value: texWolken }, uSonne: { value: SONNE },
+        },
+        vertexShader: `
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vUv = uv; vN = normalize(position);
+            vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+            gl_Position = projectionMatrix * viewMatrix * w;
+          }`,
+        fragmentShader: `
+          uniform sampler2D uTag, uNacht, uWasser, uRelief, uWolken; uniform vec3 uSonne;
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vec3 n = normalize(vN);
+            vec2 px = vec2(1.0 / 2048.0, 1.0 / 1024.0);
+            float hC = texture2D(uRelief, vUv).r;
+            float hX = texture2D(uRelief, vUv + vec2(px.x, 0.0)).r;
+            float hY = texture2D(uRelief, vUv + vec2(0.0, px.y)).r;
+            vec3 east = normalize(cross(vec3(0.0, 1.0, 0.0), n));
+            vec3 north = cross(n, east);
+            vec3 nb = normalize(n - (east * (hX - hC) + north * (hY - hC)) * 3.0);
+            float ndl = dot(nb, uSonne);
+            float tag = smoothstep(-0.10, 0.22, dot(n, uSonne));
+            vec3 V = normalize(cameraPosition - vW);
+            vec3 col = texture2D(uTag, vUv).rgb;
+            float wasser = texture2D(uWasser, vUv).r;
+            // Winter: Schnee auf dem Land im hohen Norden
+            float schnee = smoothstep(0.80, 0.92, n.y) * (1.0 - wasser);
+            col = mix(col, vec3(0.88, 0.92, 0.98), schnee * 0.85);
+            float ws = texture2D(uWolken, vUv + vec2(0.0015, 0.0008)).r;
+            col *= 1.0 - ws * 0.45;
+            vec3 lit = col * (max(ndl, 0.0) * 1.35 + 0.015) * tag;
+            vec3 H = normalize(uSonne + V);
+            lit += vec3(1.0, 0.85, 0.6) * pow(max(dot(n, H), 0.0), 60.0) * wasser * 0.9 * tag;
+            float daemm = smoothstep(-0.18, 0.0, dot(n, uSonne)) * (1.0 - smoothstep(0.0, 0.22, dot(n, uSonne)));
+            lit += vec3(0.5, 0.22, 0.08) * daemm * 0.012;
+            // Mondlicht auf dem Schnee der Nachtseite
+            lit += vec3(0.05, 0.07, 0.11) * schnee * (1.0 - tag);
+            vec3 nl = texture2D(uNacht, vUv).rgb;
+            float stadt = max(nl.r - nl.b * 0.85, 0.0) * 3.0;
+            vec3 lichter = nl * 0.35 + vec3(1.0, 0.68, 0.36) * pow(stadt, 1.4) * 2.6;
+            lit += lichter * (1.0 - smoothstep(-0.08, 0.12, dot(n, uSonne)));
+            float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+            lit += vec3(0.25, 0.5, 1.0) * fres * (0.04 + 0.9 * tag);
+            gl_FragColor = vec4(lit, 1.0);
+          }`,
+      });
+      const erde = new THREE.Mesh(new THREE.SphereGeometry(1, 256, 128), erdeMat);
+      globus.add(erde);
+
+      const wolkenMat = new THREE.ShaderMaterial({
+        uniforms: { uWolken: { value: texWolken }, uSonne: { value: SONNE } },
+        transparent: true, depthWrite: false,
+        vertexShader: `
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+          void main() { vUv = uv; vN = normalize(position); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+        fragmentShader: `
+          uniform sampler2D uWolken; uniform vec3 uSonne;
+          varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+          void main() {
+            float a = texture2D(uWolken, vUv).r;
+            float ndl = dot(normalize(vN), uSonne);
+            float tag = smoothstep(-0.12, 0.25, ndl);
+            vec3 c = vec3(1.0) * (max(ndl, 0.0) * 1.2 + 0.02) * tag + vec3(0.03, 0.04, 0.07) * (1.0 - tag);
+            gl_FragColor = vec4(c, a * 0.92);
+          }`,
+      });
+      const wolken = new THREE.Mesh(new THREE.SphereGeometry(1.006, 192, 96), wolkenMat);
+      globus.add(wolken);
+
+      // Nordlicht-Oval um den magnetischen Nordpol
+      const ovalMat = new THREE.ShaderMaterial({
+        uniforms: { uPol: { value: MAGPOL }, uSonne: { value: SONNE }, uT: { value: 0 }, uStark: { value: 1 } },
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+        vertexShader: `varying vec3 vN; varying vec3 vW; void main() { vN = normalize(position); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+        fragmentShader: `
+          uniform vec3 uPol, uSonne; uniform float uT, uStark; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vec3 n = normalize(vN);
+            float ang = degrees(acos(clamp(dot(n, uPol), -1.0, 1.0)));
+            vec3 e1 = normalize(cross(uPol, vec3(0.0, 1.0, 0.0)));
+            vec3 e2 = cross(uPol, e1);
+            float lon = atan(dot(n, e2), dot(n, e1));
+            float mitte = 20.5 + 2.2 * sin(lon * 3.0 + uT * 0.4) + 1.0 * sin(lon * 7.0 - uT * 0.7);
+            float band = exp(-pow((ang - mitte) / 1.6, 2.0));
+            float fein = 0.75 + 0.25 * sin(lon * 90.0 + sin(lon * 11.0 + uT) * 3.0);
+            float nacht = 1.0 - smoothstep(-0.15, 0.1, dot(n, uSonne));
+            vec3 V = normalize(cameraPosition - vW);
+            float rand = 0.6 + 0.8 * pow(1.0 - max(dot(n, V), 0.0), 1.5);
+            vec3 c = mix(vec3(0.15, 1.0, 0.45), vec3(0.6, 0.25, 0.9), smoothstep(mitte - 1.0, mitte - 3.5, ang));
+            gl_FragColor = vec4(c * band * fein * nacht * rand * 0.4 * uStark, 1.0);
+          }`,
+      });
+      const oval = new THREE.Mesh(new THREE.SphereGeometry(1.012, 192, 96), ovalMat);
+      globus.add(oval);
+
+      const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.045, 128, 64), new THREE.ShaderMaterial({
+        uniforms: { uSonne: { value: SONNE } },
+        side: THREE.BackSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+        vertexShader: `varying vec3 vN; varying vec3 vW; void main() { vN = normalize(position); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+        fragmentShader: `
+          uniform vec3 uSonne; varying vec3 vN; varying vec3 vW;
+          void main() {
+            vec3 V = normalize(cameraPosition - vW);
+            float k = pow(max(0.0, 0.72 - dot(-V, normalize(vN))), 5.0) * 9.0;
+            float tag = smoothstep(-0.3, 0.4, dot(normalize(vN), uSonne));
+            gl_FragColor = vec4(vec3(0.3, 0.55, 1.0) * k * (0.08 + tag), 1.0);
+          }`,
+      }));
+      globus.add(atmo);
+
+      const sterneMat = new THREE.MeshBasicMaterial({ map: texSterne, side: THREE.BackSide, color: 0x9a9a9a, depthWrite: false });
+      globus.add(new THREE.Mesh(new THREE.SphereGeometry(120, 64, 32), sterneMat));
+
+      // =====================================================================
+      // 2) LAPPLAND (Meter, x = Osten, z = Süden; Nordlicht im Norden)
+      // =====================================================================
+      const land = new THREE.Scene();
+      const kam = new THREE.PerspectiveCamera(38, 1080 / 1920, 0.1, 160000);
+      land.fog = new THREE.FogExp2(new THREE.Color(0x0d1726), 0.0001);
+
+      const DORF = v3(0, 0, -4);
+      // Fluss (zugefroren) südwestlich des Dorfes
+      const flussZ = (x) => 900 + 380 * Math.sin(x / 2600 + 0.4) + 160 * Math.sin(x / 830 + 1.7);
+      const hoehe = (x, z) => {
+        let h = 230 * fbm(x / 6000, z / 6000, 4) * smooth(500, 6000, Math.hypot(x, z))
+          + 40 * fbm(x / 900, z / 900, 3);
+        const f = Math.abs(z - flussZ(x));
+        h = lerp(h, -6, 1 - smooth(120, 240, f));
+        const r = Math.hypot(x - DORF.x, z - DORF.z);
+        const m = 1 - smooth(70, 260, r);
+        return lerp(h, 20, m) - 20;
+      };
+      const wald = (x, z) => fbm(x / 260 + 4.1, z / 260 - 2.3, 4);
+
+      // ---------- Licht ----------
+      const MOND = v3(0.35, 0.42, 0.84).normalize(); // hinter der Kamera, beleuchtet die Szene von vorn
+      const mondLicht = new THREE.DirectionalLight(0xa9c2ff, 0.7);
+      mondLicht.position.copy(MOND).multiplyScalar(1000);
+      land.add(mondLicht);
+      const hemi = new THREE.HemisphereLight(0x2f5f74, 0x1a2230, 0.45);
+      land.add(hemi);
+
+      // ---------- Himmel mit Nordlicht ----------
+      const himmelMat = new THREE.ShaderMaterial({
+        uniforms: { uSterne: { value: texSterne }, uT: { value: 0 }, uNord: { value: 1 } },
+        side: THREE.BackSide, depthWrite: false, fog: false,
+        vertexShader: `varying vec3 vD; void main() { vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform sampler2D uSterne; uniform float uT, uNord; varying vec3 vD;
+          void main() {
+            vec3 d = normalize(vD);
+            float h = d.y;
+            vec3 c = mix(vec3(0.05, 0.085, 0.14), vec3(0.006, 0.01, 0.028), smoothstep(0.0, 0.5, h));
+            c += vec3(0.08, 0.06, 0.06) * exp(-abs(h) * 22.0) * 0.5;
+            vec2 uv = vec2(atan(d.z, d.x) / 6.2832 + 0.5, asin(clamp(d.y, -1.0, 1.0)) / 3.1416 + 0.5);
+            c += texture2D(uSterne, uv * vec2(2.0, 1.0)).rgb * 0.6 * smoothstep(0.03, 0.3, h);
+            // Nordlicht: drei Vorhänge, unten grün, oben violett
+            float az = atan(d.x, -d.z);
+            vec3 a = vec3(0.0);
+            for (int i = 0; i < 3; i++) {
+              float fi = float(i);
+              float basis = 0.05 + 0.05 * fi + 0.05 * sin(az * 1.6 + fi * 2.1 + uT * 0.12) + 0.02 * sin(az * 4.7 - uT * 0.25 + fi);
+              float ueber = h - basis;
+              float senk = smoothstep(-0.012, 0.006, ueber) * exp(-max(ueber, 0.0) * (4.0 - fi));
+              float strahl = 0.5 + 0.5 * sin(az * 70.0 + sin(az * 6.0 + uT * 0.45 + fi) * 5.0 + fi * 3.0);
+              strahl = 0.35 + 0.65 * strahl * (0.6 + 0.4 * sin(az * 19.0 - uT * 0.9 + fi * 1.7));
+              float wo = 1.0 - smoothstep(0.5, 1.7, abs(az - 0.35 + fi * 0.45));
+              vec3 farbe = mix(vec3(0.12, 1.0, 0.42), vec3(0.62, 0.22, 0.95), smoothstep(0.02, 0.28, ueber));
+              a += farbe * senk * strahl * wo * (1.0 - fi * 0.22);
+            }
+            c += a * 0.62 * uNord;
+            gl_FragColor = vec4(c, 1.0);
+          }`,
+      });
+      const himmel = new THREE.Mesh(new THREE.SphereGeometry(140000, 64, 32), himmelMat);
+      land.add(himmel);
+
+      const umgebung = new THREE.Scene();
+      umgebung.add(new THREE.Mesh(new THREE.SphereGeometry(100, 64, 32), himmelMat));
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const umgebungsMap = pmrem.fromScene(umgebung, 0.0).texture;
+      land.environment = umgebungsMap;
+      land.environmentIntensity = 0.5;
+
+      // ---------- Gelände in drei Detailstufen ----------
+      const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 });
+      const gelaende = (gross, segs, loch) => {
+        const g = new THREE.PlaneGeometry(gross, gross, segs, segs);
+        g.rotateX(-Math.PI / 2);
+        const p = g.attributes.position, farben = [];
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), z = p.getZ(i);
+          let h = hoehe(x, z);
+          if (loch && Math.abs(x) < loch && Math.abs(z) < loch) h -= 60;
+          p.setY(i, h);
+          const n = fbm(x / 90, z / 90, 3);
+          let c = [lerp(0.62, 0.78, n), lerp(0.68, 0.82, n), lerp(0.8, 0.92, n)]; // Schnee
+          const w = wald(x, z);
+          const r = Math.hypot(x - DORF.x, z - DORF.z);
+          const dicht = smooth(0.43, 0.52, w) * smooth(60, 160, r);
+          c = c.map((v, k) => lerp(v, [0.09, 0.12, 0.11][k] * lerp(0.8, 1.3, n), dicht * 0.9));
+          const f = Math.abs(z - flussZ(x));
+          if (f < 200) c = c.map((v, k) => lerp(v, [0.55, 0.64, 0.75][k], 1 - smooth(140, 200, f)));
+          farben.push(...c);
+        }
+        g.setAttribute("color", new THREE.Float32BufferAttribute(farben, 3));
+        // Normalen direkt aus dem Höhenfeld: keine Lichtkanten an den Übergängen der Detailstufen
+        const nrm = g.attributes.normal, e = 6;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), z = p.getZ(i);
+          const n = v3(hoehe(x - e, z) - hoehe(x + e, z), 2 * e, hoehe(x, z - e) - hoehe(x, z + e)).normalize();
+          nrm.setXYZ(i, n.x, n.y, n.z);
+        }
+        land.add(new THREE.Mesh(g, terrainMat));
+      };
+      gelaende(90000, 360, 3900);
+      gelaende(8000, 320, 235);
+      gelaende(500, 250, 0);
+
+      // ---------- Lichter (Punkte in Metern) ----------
+      const P = [], F = [], G = [];
+      const NATRIUM = [1.0, 0.58, 0.22], WARM = [1.0, 0.8, 0.55], KALT = [0.75, 0.85, 1.0];
+      const licht = (x, z, groesse, farbe, nah = false, hell = 1, y = null) => {
+        if (Math.abs(z - flussZ(x)) < 150) return;
+        if (!nah && Math.hypot(x - DORF.x, z - DORF.z) < 140) return;
+        P.push(x, (y ?? hoehe(x, z)) + 3 + groesse * 0.2, z);
+        const j = 0.85 + rnd() * 0.3;
+        F.push(farbe[0] * hell * j, farbe[1] * hell * j, farbe[2] * hell * j);
+        G.push(groesse);
+      };
+      const gauss = () => { let s = 0; for (let i = 0; i < 4; i++) s += rnd(); return (s - 2) / 0.58; };
+      const stadt = (cx, cz, radius, anzahl) => {
+        const winkel = rnd() * Math.PI, ca = Math.cos(winkel), sa = Math.sin(winkel);
+        const abstand = 40 + rnd() * 25;
+        for (let i = 0; i < anzahl; i++) {
+          let u = gauss() * radius, v = gauss() * radius;
+          const strasse = rnd() < 0.55;
+          if (strasse) { if (rnd() < 0.5) u = Math.round(u / abstand) * abstand; else v = Math.round(v / abstand) * abstand; }
+          u += (rnd() - 0.5) * 4; v += (rnd() - 0.5) * 4;
+          const x = cx + u * ca - v * sa, z = cz + u * sa + v * ca;
+          licht(x, z, strasse ? 5.5 : 4, strasse ? NATRIUM : rnd() < 0.85 ? WARM : KALT, false, strasse ? 1.1 : 0.8);
+        }
+      };
+      // Rovaniemi im Südwesten, Dörfer verstreut im Wald
+      stadt(-6500, 7800, 1700, 16000);
+      for (let k = 0; k < 26; k++) {
+        const x = (rnd() - 0.5) * 60000, z = (rnd() - 0.5) * 60000;
+        if (Math.hypot(x, z) < 2500) continue;
+        stadt(x, z, 120 + rnd() * 400, Math.floor(120 + rnd() * 700));
+      }
+      // Strassen
+      for (let s = 0; s < 1; s += 0.00035) { // Rovaniemi -> Dorf -> Norden
+        const x = lerp(-6500, 1300, s) + 400 * Math.sin(s * 9), z = lerp(7800, -30000, s);
+        licht(x, z, 6, NATRIUM, false, 1.2);
+      }
+      for (let x = -40000; x < 40000; x += 60) licht(x, 260 + 600 * Math.sin(x / 4100), 6, NATRIUM, false, 1.1);
+      // Dorfwege und Laternen ums Weihnachtsmanndorf
+      for (let k = 0; k < 260; k++) {
+        const a = rnd() * Math.PI * 2, r = 30 + Math.pow(rnd(), 0.8) * 260;
+        licht(DORF.x + Math.cos(a) * r, DORF.z + Math.sin(a) * r, 3.0, rnd() < 0.8 ? WARM : NATRIUM, true, 0.8);
+      }
+      // Die Polarkreis-Linie: eine Lichterkette von West nach Ost, direkt vor dem Weihnachtsmann
+      const POLARKREIS_Z = 1.6;
+      for (let x = -36; x <= 36; x += 0.8) licht(x, POLARKREIS_Z, 0.35, KALT, true, 1.2, -2.95);
+
+      const lichterMat = new THREE.ShaderMaterial({
+        uniforms: { uSkala: { value: 1 }, uNebel: { value: 0.0001 }, uHell: { value: 1 } },
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+        vertexShader: `
+          attribute vec3 farbe; attribute float groesse;
+          uniform float uSkala, uNebel, uHell;
+          varying vec3 vC;
+          void main() {
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            float px = groesse * uSkala / -mv.z;
+            float e = clamp(px / 1.6, 0.0, 1.0);
+            gl_PointSize = clamp(px * 2.4, 3.2, 14.0);
+            float dist = length(mv.xyz);
+            float f = exp(-pow(uNebel * dist, 2.0));
+            vC = farbe * e * e * f * uHell * 2.0;
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          varying vec3 vC;
+          void main() {
+            vec2 p = gl_PointCoord - 0.5;
+            float r = length(p) * 2.0;
+            float a = exp(-r * r * 9.0) + exp(-r * r * 2.2) * 0.12;
+            gl_FragColor = vec4(vC * a, 1.0);
+          }`,
+      });
+      const lichterGeo = new THREE.BufferGeometry();
+      const lichter = new THREE.Points(lichterGeo, lichterMat);
+      lichter.frustumCulled = false;
+      land.add(lichter);
+
+      // ---------- Hilfen ----------
+      const std = (c, r = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...extra });
+      const add = (geo, mat, x, y, z, ziel) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); ziel.add(m); return m; };
+      const box = (w, h, d, mat, x, y, z, ziel) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, ziel);
+      const kugel = (r, mat, x, y, z, ziel, sx = 1, sy = 1, sz = 1) => { const m = add(new THREE.SphereGeometry(r, 32, 20), mat, x, y, z, ziel); m.scale.set(sx, sy, sz); return m; };
+      const glow = (farbe, x, y, z, ziel, s = 1) => {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x000000, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+        sp.position.set(x, y, z); sp.scale.set(s, s, 1); ziel.add(sp);
+        sp.userData.farbe = new THREE.Color(farbe);
+        return sp;
+      };
+      const schneeTex = canvasTex(256, 256, (g, w, h) => {
+        g.fillStyle = "#eef3fb"; g.fillRect(0, 0, w, h);
+        for (let k = 0; k < 900; k++) {
+          const l = 205 + rnd() * 50;
+          g.fillStyle = `rgba(${l - 25},${l - 15},${l},${0.08 + rnd() * 0.12})`;
+          g.beginPath(); g.ellipse(rnd() * w, rnd() * h, 3 + rnd() * 18, 2 + rnd() * 8, 0, 0, 6.29); g.fill();
+        }
+      });
+      schneeTex.wrapS = schneeTex.wrapT = THREE.RepeatWrapping;
+      schneeTex.repeat.set(3, 2);
+      const M = {
+        schnee: std(0xffffff, 0.75, { map: schneeTex }),
+        holzRot: std(0x8e2219, 0.85),
+        holzDunkel: std(0x3d2617, 0.9),
+        rahmen: std(0xf2ede2, 0.7),
+        dunkel: std(0x1b1b1d, 0.5, { metalness: 0.4 }),
+        gold: std(0xd9a73a, 0.3, { metalness: 0.9 }),
+        tanne: std(0x1d3a24, 0.95),
+      };
+
+      // Fensterbild: warmer Innenraum
+      const innenTex = (v) => canvasTex(256, 256, (g, w, h) => {
+        const grad = g.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, "#ffe3a8"); grad.addColorStop(0.6, "#ffb45c"); grad.addColorStop(1, "#a85a22");
+        g.fillStyle = grad; g.fillRect(0, 0, w, h);
+        const r = g.createRadialGradient(w * (0.3 + v * 0.4), h * 0.4, 0, w * 0.5, h * 0.4, 120);
+        r.addColorStop(0, "rgba(255,250,230,0.9)"); r.addColorStop(1, "rgba(255,220,160,0)");
+        g.fillStyle = r; g.fillRect(0, 0, w, h);
+        g.fillStyle = "rgba(60,30,15,0.7)";
+        g.fillRect(w * 0.1, h * 0.72, w * 0.5, h * 0.12);
+        // Sprossenfenster
+        g.fillStyle = "#f3eee4"; g.fillRect(w / 2 - 6, 0, 12, h); g.fillRect(0, h / 2 - 6, w, 12);
+        g.lineWidth = 16; g.strokeStyle = "#f3eee4"; g.strokeRect(0, 0, w, h);
+      });
+      const innen = [innenTex(0), innenTex(0.5), innenTex(1)];
+
+      // ---------- Holzhütte mit Schneedach ----------
+      const fensterMats = [];
+      const eisMat = new THREE.MeshPhysicalMaterial({ color: 0xdff2ff, roughness: 0.08, transmission: 0, transparent: true, opacity: 0.85, envMapIntensity: 2 });
+      const huette = (x, z, rot, s, ziel, gross = false) => {
+        const g = new THREE.Group();
+        g.position.set(x, 0, z); g.rotation.y = rot; g.scale.setScalar(s);
+        const B = 8, T = 6, H = 3.2;
+        box(B, H, T, M.holzRot, 0, H / 2, 0, g);
+        // Balkenstruktur
+        for (let y = 0.25; y < H; y += 0.32) box(B + 0.12, 0.05, T + 0.12, M.holzDunkel, 0, y, 0, g);
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.3, H, 0.3, M.holzDunkel, sx * (B / 2), H / 2, sz * (T / 2), g);
+        // Giebel
+        const giebel = new THREE.Shape();
+        giebel.moveTo(-T / 2, 0); giebel.lineTo(T / 2, 0); giebel.lineTo(0, 2.3); giebel.lineTo(-T / 2, 0);
+        for (const sx of [-1, 1]) {
+          const gm = new THREE.Mesh(new THREE.ExtrudeGeometry(giebel, { depth: 0.2, bevelEnabled: false }), M.holzRot);
+          gm.rotation.y = Math.PI / 2; gm.position.set(sx * (B / 2) - 0.1, H, 0); g.add(gm);
+        }
+        // Dach: zwei geneigte Flächen, dick verschneit
+        const neig = Math.atan2(2.3, T / 2), lang = Math.hypot(T / 2, 2.3) + 0.9;
+        for (const sz of [-1, 1]) {
+          const d = box(B + 1.4, 0.25, lang, M.holzDunkel, 0, 0, 0, g);
+          d.rotation.x = sz * neig; d.position.set(0, H + 1.15 - 0.02, sz * (T / 4 + 0.15));
+          const sn = box(B + 1.5, 0.45, lang + 0.1, M.schnee, 0, 0, 0, g);
+          sn.rotation.x = sz * neig; sn.position.set(0, H + 1.15 + 0.3, sz * (T / 4 + 0.08));
+          // Schneewulst an der Traufe
+          const w = add(new THREE.CapsuleGeometry(0.22, B + 1.1, 6, 12), M.schnee, 0, H - 0.05, sz * (T / 2 + 0.65), g);
+          w.rotation.z = Math.PI / 2;
+          if (sz > 0) for (let i = 0; i < 26; i++) {
+            const l = 0.12 + hash(i, 7) * 0.35;
+            const ez = add(new THREE.ConeGeometry(0.035, l, 6), eisMat, -B / 2 - 0.4 + i * ((B + 0.8) / 25), H - 0.25 - l / 2, T / 2 + 0.72, g);
+            ez.rotation.x = Math.PI;
+          }
+        }
+        // Kamin
+        box(0.7, 1.8, 0.7, std(0x6f6a66, 0.95), 2.2, H + 2.0, -1.2, g);
+        box(0.85, 0.3, 0.85, M.schnee, 2.2, H + 2.95, -1.2, g);
+        // Tür
+        box(1.3, 2.2, 0.12, M.holzDunkel, 0, 1.1, T / 2 + 0.03, g);
+        box(1.6, 0.15, 0.2, M.rahmen, 0, 2.28, T / 2 + 0.05, g);
+        kugel(0.06, M.gold, 0.45, 1.1, T / 2 + 0.12, g);
+        // Kranz an der Tür
+        const kranz = add(new THREE.TorusGeometry(0.26, 0.08, 10, 24), M.tanne, 0, 1.7, T / 2 + 0.14, g);
+        add(new THREE.SphereGeometry(0.06, 12, 8), std(0xc4141c, 0.4), 0, 1.45, T / 2 + 0.2, g);
+        // Fenster
+        const fenster = (fx, fy, fz, ry) => {
+          const mat = new THREE.MeshStandardMaterial({ color: 0x050505, emissive: 0xffffff, emissiveMap: innen[fensterMats.length % 3], emissiveIntensity: 0.2, roughness: 0.1 });
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.2), mat);
+          m.position.set(fx, fy, fz); m.rotation.y = ry; g.add(m);
+          fensterMats.push(mat);
+          const r = box(1.35, 0.12, 0.25, M.rahmen, fx, fy - 0.66, fz, g); r.rotation.y = ry;
+          const sb = box(1.4, 0.1, 0.35, M.schnee, fx, fy - 0.56, fz, g); sb.rotation.y = ry;
+        };
+        for (const fx of [-2.6, 2.6]) fenster(fx, 1.65, T / 2 + 0.02, 0);
+        fenster(B / 2 + 0.02, 1.65, 0, Math.PI / 2);
+        fenster(-B / 2 - 0.02, 1.65, 0, -Math.PI / 2);
+        ziel.add(g);
+        return g;
+      };
+
+      const dorf = new THREE.Group();
+      land.add(dorf);
+      const HZ = -12.5;
+      const hauptHuette = huette(0, HZ, 0, 1, dorf, true);
+
+      // Lichterkette an der Traufe der Haupthütte (bunte Birnen)
+      const birnen = [];
+      const BUNT = [0xff3030, 0x30ff60, 0xffd040, 0x4080ff, 0xff60e0];
+      const birneGeo = new THREE.SphereGeometry(0.07, 10, 8);
+      for (let i = 0; i <= 40; i++) {
+        const x = -4.6 + i * 0.23;
+        const y = 3.05 - 0.1 * Math.sin(((i % 5) / 5) * Math.PI);
+        const farbe = BUNT[i % BUNT.length];
+        const mat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const m = add(birneGeo, mat, x, y, HZ + 3.75, dorf);
+        birnen.push({ mat, farbe: new THREE.Color(farbe), sp: glow(farbe, x, y, HZ + 3.8, dorf, 0.55), i });
+      }
+
+      // Weitere Hütten im Dorf
+      const nachbarn = [[-17, -17, 0.5, 0.85], [16, -19, -0.45, 0.8], [-30, -32, 0.2, 0.9], [26, -36, -0.3, 0.9], [-4, -38, 0.05, 1.0], [-44, -8, 0.9, 0.8], [42, -10, -1.0, 0.85],
+        [-60, -50, 0.4, 0.9], [55, -55, -0.6, 0.9], [8, -70, 0.1, 1.1], [-28, -75, 0.3, 0.9], [70, -28, -1.2, 0.8], [-75, -26, 1.2, 0.85]];
+      for (const [x, z, r, s] of nachbarn) huette(x, z, r, s, dorf);
+      for (let k = 0; k < 40; k++) {
+        const a = rnd() * Math.PI * 2, r = 95 + rnd() * 160;
+        const x = DORF.x + Math.cos(a) * r, z = DORF.z + Math.sin(a) * r;
+        if (z > 40) continue;
+        const g = huette(x, z, rnd() * 6.28, 0.7 + rnd() * 0.4, dorf);
+        g.position.y = hoehe(x, z);
+      }
+
+      // ---------- Tannen mit Schnee ----------
+      const tannenGeo = (() => {
+        const teile = [];
+        for (const [r, h, y] of [[1.0, 1.5, 0.95], [0.78, 1.25, 1.65], [0.52, 1.05, 2.3], [0.28, 0.8, 2.85]]) {
+          const c = new THREE.ConeGeometry(r, h, 9, 1).toNonIndexed();
+          c.translate(0, y, 0);
+          teile.push(c);
+        }
+        const st = new THREE.CylinderGeometry(0.1, 0.13, 0.6, 6).toNonIndexed();
+        st.translate(0, 0.3, 0);
+        teile.push(st);
+        const pos = [], nor = [], col = [];
+        teile.forEach((g, k) => {
+          const p = g.attributes.position, n = g.attributes.normal;
+          for (let i = 0; i < p.count; i++) {
+            pos.push(p.getX(i), p.getY(i), p.getZ(i)); nor.push(n.getX(i), n.getY(i), n.getZ(i));
+            if (k === 4) { col.push(0.25, 0.17, 0.1); continue; }
+            // Spitzen der Etagen verschneit, Rand dunkelgrün
+            const ry = Math.hypot(p.getX(i), p.getZ(i));
+            const s = ry < 0.05 ? 1 : 0.18 + 0.25 * hash(i, k);
+            col.push(lerp(0.07, 0.86, s), lerp(0.16, 0.9, s), lerp(0.09, 0.96, s));
+          }
+        });
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+        g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+        return g;
+      })();
+      {
+        const baeume = [];
+        for (let k = 0; k < 90000 && baeume.length < 14000; k++) {
+          const a = rnd() * Math.PI * 2, r = 22 + Math.pow(rnd(), 1.5) * 1500;
+          const x = DORF.x + Math.cos(a) * r, z = DORF.z + Math.sin(a) * r;
+          if (Math.abs(z - flussZ(x)) < 190) continue;
+          const w = wald(x, z);
+          if (r > 60 && w < 0.44) continue;
+          if (r < 60 && (z > -17 || Math.abs(x) < 10)) continue; // freier Platz vor der Hütte
+          if (Math.abs(z - POLARKREIS_Z) < 4) continue;
+          baeume.push([x, hoehe(x, z), z, 2.2 + rnd() * 3.2 * (r > 40 ? 1 : 0.6), rnd()]);
+        }
+        const im = new THREE.InstancedMesh(tannenGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: true }), baeume.length);
+        const dummy = new THREE.Object3D();
+        baeume.forEach(([x, y, z, g, v], i) => {
+          dummy.position.set(x, y - 0.2, z); dummy.scale.set(g * 0.55, g, g * 0.55); dummy.rotation.set(0, v * 6.28, 0); dummy.updateMatrix();
+          im.setMatrixAt(i, dummy.matrix);
+        });
+        land.add(im);
+      }
+
+      // ---------- Weihnachtsbaum mit Lichtern ----------
+      const baumLichter = [];
+      const BAUM = v3(2.0, 0, -4.4);
+      {
+        const b = new THREE.Mesh(tannenGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: true }));
+        b.position.copy(BAUM); b.scale.set(1.25, 1.55, 1.25);
+        dorf.add(b);
+        for (let i = 0; i < 46; i++) {
+          const u = i / 46, y = 0.7 + u * 4.0;
+          const r = (1 - u) * 1.15 + 0.1;
+          const a = i * 2.4;
+          const x = BAUM.x + Math.cos(a) * r, z = BAUM.z + Math.sin(a) * r;
+          const farbe = BUNT[i % BUNT.length];
+          const mat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+          add(birneGeo, mat, x, y, z, dorf);
+          baumLichter.push({ mat, farbe: new THREE.Color(farbe), sp: glow(farbe, x, y, z, dorf, 0.5), u, i });
+        }
+        // Stern
+        const stern = new THREE.Shape();
+        for (let k = 0; k < 10; k++) {
+          const r = k % 2 ? 0.13 : 0.32, a = (k / 10) * Math.PI * 2 + Math.PI / 2;
+          k ? stern.lineTo(Math.cos(a) * r, Math.sin(a) * r) : stern.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        const sternMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const sm = new THREE.Mesh(new THREE.ExtrudeGeometry(stern, { depth: 0.06, bevelEnabled: false }), sternMat);
+        sm.position.set(BAUM.x, 4.95, BAUM.z);
+        dorf.add(sm);
+        baumLichter.stern = { mat: sternMat, sp: glow(0xffd36a, BAUM.x, 4.95, BAUM.z + 0.1, dorf, 1.8) };
+        // Geschenke unter dem Baum
+        for (const [gx, gz, w, h, c] of [[1.1, -3.3, 0.5, 0.4, 0xc4141c], [1.7, -3.0, 0.4, 0.35, 0x1d6b3a], [2.5, -3.1, 0.55, 0.3, 0x2453b8], [3.0, -3.7, 0.4, 0.5, 0xe8b21c]]) {
+          box(w, h, w, std(c, 0.6), gx, h / 2, gz, dorf);
+          box(w + 0.01, h + 0.01, 0.07, M.gold, gx, h / 2, gz, dorf);
+          box(0.07, h + 0.01, w + 0.01, M.gold, gx, h / 2, gz, dorf);
+        }
+      }
+
+      // ---------- Schlitten mit Geschenkesack ----------
+      {
+        const s = new THREE.Group();
+        s.position.set(-2.5, 0, -6.0); s.rotation.y = 0.5;
+        const rot = std(0xa8101a, 0.35, { metalness: 0.1 });
+        const form = new THREE.Shape();
+        form.moveTo(-1.2, 0.35); form.lineTo(1.1, 0.35); form.quadraticCurveTo(1.6, 0.4, 1.5, 1.0);
+        form.lineTo(1.2, 1.0); form.quadraticCurveTo(1.0, 0.65, 0.4, 0.65); form.lineTo(-0.6, 0.65);
+        form.quadraticCurveTo(-0.9, 1.3, -1.3, 1.25); form.quadraticCurveTo(-1.45, 0.8, -1.2, 0.35);
+        for (const sz of [-0.55, 0.45]) {
+          const m = new THREE.Mesh(new THREE.ExtrudeGeometry(form, { depth: 0.1, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 2 }), rot);
+          m.position.z = sz; s.add(m);
+        }
+        box(2.5, 0.08, 1.1, rot, -0.05, 0.4, 0.0, s);
+        box(0.12, 0.62, 1.1, rot, -1.2, 0.85, 0.0, s);
+        // Kufen
+        for (const sz of [-0.5, 0.5]) {
+          const k = new THREE.CatmullRomCurve3([v3(-1.4, 0.06, sz), v3(0.8, 0.06, sz), v3(1.5, 0.2, sz), v3(1.7, 0.55, sz), v3(1.45, 0.75, sz)]);
+          s.add(new THREE.Mesh(new THREE.TubeGeometry(k, 30, 0.04, 8), M.gold));
+          for (const x of [-0.9, 0.6]) box(0.05, 0.32, 0.05, M.gold, x, 0.22, sz, s);
+        }
+        // Sack
+        const sack = kugel(0.55, std(0x8a6a44, 0.95), -0.45, 0.95, 0.0, s, 1.0, 0.95, 0.85);
+        add(new THREE.ConeGeometry(0.22, 0.5, 12), std(0x8a6a44, 0.95), -0.45, 1.75, 0, s);
+        for (const [gx, gy, gz, w, c] of [[-0.1, 1.15, 0.25, 0.3, 0xc4141c], [-0.85, 1.05, -0.2, 0.28, 0x2453b8], [-0.2, 1.3, -0.25, 0.25, 0x1d6b3a]]) {
+          const b = box(w, w, w, std(c, 0.6), gx, gy, gz, s); b.rotation.set(0.4, 0.6, 0.2);
+        }
+        dorf.add(s);
+      }
+
+      // ---------- Rentier mit roter Nase ----------
+      let nase, naseGlow, naseLicht;
+      {
+        const r = new THREE.Group();
+        r.position.set(-1.55, 0, -2.6); r.rotation.y = 0.9;
+        const fell = std(0x6e4a2e, 0.95), hell = std(0xcdb79a, 0.95), huf = std(0x231a14, 0.7);
+        kugel(0.5, fell, 0, 1.05, 0, r, 1.55, 0.78, 0.72);
+        kugel(0.28, hell, 0.45, 0.95, 0, r, 0.9, 1.0, 0.85);
+        for (const [x, z] of [[-0.48, -0.22], [-0.48, 0.22], [0.45, -0.2], [0.45, 0.2]]) {
+          add(new THREE.CylinderGeometry(0.07, 0.055, 0.85, 8), fell, x, 0.45, z, r);
+          add(new THREE.CylinderGeometry(0.075, 0.075, 0.08, 8), huf, x, 0.04, z, r);
+        }
+        const hals = add(new THREE.CylinderGeometry(0.16, 0.22, 0.65, 10), fell, 0.72, 1.45, 0, r);
+        hals.rotation.z = -0.6;
+        const kopf = kugel(0.2, fell, 0.98, 1.78, 0, r, 1.35, 0.85, 0.8);
+        kugel(0.12, hell, 1.2, 1.72, 0, r, 1.1, 0.8, 0.85);
+        for (const sz of [-1, 1]) {
+          kugel(0.03, std(0x050505, 0.2), 1.06, 1.86, sz * 0.13, r);
+          const ohr = kugel(0.07, fell, 0.88, 1.93, sz * 0.17, r, 1.6, 0.6, 0.6); ohr.rotation.x = sz * 0.6;
+          // Geweih
+          const geweih = new THREE.CatmullRomCurve3([v3(0.9, 1.92, sz * 0.08), v3(0.85, 2.15, sz * 0.18), v3(0.75, 2.4, sz * 0.32), v3(0.62, 2.55, sz * 0.42)]);
+          r.add(new THREE.Mesh(new THREE.TubeGeometry(geweih, 14, 0.028, 6), hell));
+          for (const [a, b] of [[0.3, 0.12], [0.6, 0.1]]) {
+            const p = geweih.getPoint(a);
+            const zw = new THREE.CatmullRomCurve3([p, v3(p.x + 0.15, p.y + 0.12, p.z + sz * 0.03), v3(p.x + 0.22, p.y + 0.24, p.z + sz * b * 0.2)]);
+            r.add(new THREE.Mesh(new THREE.TubeGeometry(zw, 8, 0.02, 6), hell));
+          }
+        }
+        kugel(0.08, std(0xf4f0e6, 0.9), -0.78, 1.15, 0, r);
+        const naseMat = new THREE.MeshBasicMaterial({ color: 0x400000 });
+        nase = kugel(0.06, naseMat, 1.33, 1.73, 0, r);
+        const p = new THREE.Vector3(); r.updateMatrixWorld(); nase.getWorldPosition(p);
+        naseGlow = glow(0xff2020, 0, 0, 0, dorf, 0.9); naseGlow.position.copy(p);
+        naseLicht = new THREE.PointLight(0xff2a1a, 0, 3, 2); naseLicht.position.copy(p); dorf.add(naseLicht);
+        // Glöckchen-Halsband
+        add(new THREE.TorusGeometry(0.2, 0.03, 8, 20), std(0xa8101a, 0.5), 0.62, 1.32, 0, r).rotation.y = Math.PI / 2;
+        kugel(0.05, M.gold, 0.78, 1.18, 0, r);
+        dorf.add(r);
+      }
+
+      // ---------- Der Weihnachtsmann ----------
+      const santa = new THREE.Group();
+      santa.position.set(0, 0, 0);
+      dorf.add(santa);
+      const ROT = std(0xb3121f, 0.62), PELZ = std(0xf6f4ef, 1.0), HAUT = std(0xf0bf9e, 0.6), STIEFEL = std(0x141414, 0.35);
+      const koerper = new THREE.Group();
+      santa.add(koerper);
+      // Stiefel und Beine
+      for (const sx of [-1, 1]) {
+        kugel(0.11, STIEFEL, sx * 0.13, 0.08, 0.06, koerper, 0.85, 0.7, 1.45);
+        add(new THREE.CylinderGeometry(0.095, 0.1, 0.24, 14), STIEFEL, sx * 0.13, 0.2, 0, koerper);
+        add(new THREE.TorusGeometry(0.1, 0.03, 8, 18), PELZ, sx * 0.13, 0.33, 0, koerper).rotation.x = Math.PI / 2;
+        add(new THREE.CylinderGeometry(0.1, 0.09, 0.3, 14), ROT, sx * 0.13, 0.46, 0, koerper);
+      }
+      // Mantel (Drehkörper) mit Bauch
+      const mantelProfil = [[0.0, 0.5], [0.36, 0.5], [0.4, 0.62], [0.44, 0.8], [0.46, 0.96], [0.43, 1.12], [0.36, 1.28], [0.28, 1.38], [0.14, 1.46], [0.0, 1.48]].map(([r, y]) => new THREE.Vector2(r, y));
+      const mantel = new THREE.Mesh(new THREE.LatheGeometry(mantelProfil, 40), ROT);
+      koerper.add(mantel);
+      kugel(0.38, ROT, 0, 0.92, 0.1, koerper, 1.0, 1.0, 0.9); // Bauch
+      add(new THREE.TorusGeometry(0.38, 0.06, 10, 40), PELZ, 0, 0.53, 0, koerper).rotation.x = Math.PI / 2;
+      // Pelzstreifen vorne
+      for (let k = 0; k < 9; k++) {
+        const y = 0.58 + k * 0.095;
+        const prof = (yy) => { for (let i = 1; i < mantelProfil.length; i++) { const a = mantelProfil[i - 1], b = mantelProfil[i]; if (yy <= b.y) return lerp(a.x, b.x, (yy - a.y) / (b.y - a.y)); } return 0; };
+        const bauchZ = 0.1 + 0.9 * Math.sqrt(Math.max(0, 0.38 * 0.38 - (y - 0.92) ** 2));
+        const z = Math.max(prof(y), bauchZ) + 0.01;
+        kugel(0.065, PELZ, 0, y, z - 0.03, koerper, 1.15, 0.9, 0.6);
+      }
+      // Gürtel mit Schnalle
+      const guertel = add(new THREE.TorusGeometry(0.43, 0.05, 8, 40), STIEFEL, 0, 0.92, 0.03, koerper);
+      guertel.rotation.x = Math.PI / 2; guertel.scale.set(1.0, 1.06, 1.2);
+      box(0.17, 0.13, 0.04, M.gold, 0, 0.92, 0.475, koerper);
+      box(0.1, 0.07, 0.05, STIEFEL, 0, 0.92, 0.48, koerper);
+      // Kopf
+      const kopf = new THREE.Group();
+      kopf.position.set(0, 1.58, 0.02);
+      koerper.add(kopf);
+      kugel(0.15, HAUT, 0, 0.05, 0, kopf);
+      kugel(0.18, PELZ, 0, -0.08, 0.06, kopf, 1.0, 1.25, 0.78);    // Bart
+      kugel(0.11, PELZ, 0, -0.22, 0.09, kopf, 1.0, 1.15, 0.7);     // Bartspitze
+      for (const sx of [-1, 1]) {
+        const s = kugel(0.055, PELZ, sx * 0.055, 0.0, 0.135, kopf, 1.4, 0.6, 0.7); s.rotation.z = sx * -0.35; // Schnurrbart
+        kugel(0.016, std(0x0a0a0a, 0.2), sx * 0.052, 0.085, 0.137, kopf);                                    // Augen
+        const b = kugel(0.03, PELZ, sx * 0.055, 0.125, 0.128, kopf, 1.5, 0.55, 0.6); b.rotation.z = sx * 0.2; // Augenbrauen
+        kugel(0.035, std(0xe8908a, 0.7), sx * 0.085, 0.035, 0.115, kopf);                                    // Bäckchen
+        kugel(0.035, HAUT, sx * 0.15, 0.05, 0, kopf, 0.6, 1, 1);                                              // Ohren
+      }
+      kugel(0.032, std(0xdf8478, 0.5), 0, 0.04, 0.152, kopf); // Nase
+      // Mütze, nach hinten-seitlich hängend, mit Bommel
+      add(new THREE.TorusGeometry(0.15, 0.05, 10, 28), PELZ, 0, 0.15, 0, kopf).rotation.x = Math.PI / 2 - 0.12;
+      const muetze = new THREE.CatmullRomCurve3([v3(0, 0.15, 0), v3(0.02, 0.3, -0.03), v3(0.1, 0.4, -0.08), v3(0.23, 0.38, -0.12), v3(0.3, 0.27, -0.12)]);
+      const mGeo = new THREE.TubeGeometry(muetze, 24, 1, 16);
+      { // Röhre nach vorne hin verjüngen
+        const p = mGeo.attributes.position, mitte = new THREE.Vector3(), tmp = new THREE.Vector3();
+        for (let i = 0; i < p.count; i++) {
+          const u = Math.floor(i / 17) / 24;
+          muetze.getPoint(u, mitte);
+          tmp.set(p.getX(i), p.getY(i), p.getZ(i)).sub(mitte);
+          const r = lerp(0.145, 0.025, Math.pow(u, 0.85));
+          tmp.normalize().multiplyScalar(r).add(mitte);
+          p.setXYZ(i, tmp.x, tmp.y, tmp.z);
+        }
+        mGeo.computeVertexNormals();
+      }
+      kopf.add(new THREE.Mesh(mGeo, ROT));
+      kugel(0.055, PELZ, 0.31, 0.24, -0.12, kopf);
+      // Arme
+      const arm = (sx) => {
+        const schulter = new THREE.Group();
+        schulter.position.set(sx * 0.34, 1.33, 0.0);
+        koerper.add(schulter);
+        add(new THREE.SphereGeometry(0.1, 16, 12), ROT, 0, 0, 0, schulter);
+        add(new THREE.CapsuleGeometry(0.085, 0.4, 6, 14), ROT, 0, -0.27, 0, schulter);
+        add(new THREE.TorusGeometry(0.085, 0.035, 8, 18), PELZ, 0, -0.5, 0, schulter).rotation.x = Math.PI / 2;
+        kugel(0.075, std(0x101010, 0.6), 0, -0.6, 0, schulter, 1, 1.15, 0.9); // Handschuh
+        const daumen = kugel(0.03, std(0x101010, 0.6), sx * -0.06, -0.57, 0.04, schulter, 1, 1.6, 1);
+        return schulter;
+      };
+      const armR = arm(-1), armL = arm(1);
+      // Laterne in der linken Hand
+      const laterne = new THREE.Group();
+      laterne.position.set(0, -0.68, 0.0);
+      armL.add(laterne);
+      box(0.02, 0.1, 0.02, M.dunkel, 0, -0.03, 0, laterne);
+      box(0.16, 0.03, 0.16, M.dunkel, 0, -0.1, 0, laterne);
+      const laternenGlas = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      box(0.13, 0.2, 0.13, laternenGlas, 0, -0.22, 0, laterne);
+      box(0.17, 0.03, 0.17, M.dunkel, 0, -0.335, 0, laterne);
+      for (const [x, z] of [[-0.07, -0.07], [0.07, -0.07], [-0.07, 0.07], [0.07, 0.07]]) box(0.015, 0.22, 0.015, M.dunkel, x, -0.22, z, laterne);
+      const laternenGlow = glow(0xffb35a, 0, -0.22, 0.02, laterne, 0.9);
+      const laternenLicht = new THREE.PointLight(0xffb060, 0, 4, 2);
+      laternenLicht.position.set(0, -0.22, 0.12);
+      laterne.add(laternenLicht);
+
+      // Warmes Licht aus der Tür und Fülllicht auf den Weihnachtsmann
+      const tuerLicht = new THREE.PointLight(0xffb36b, 0, 14, 1.6);
+      tuerLicht.position.set(0, 2.0, HZ + 4.2);
+      dorf.add(tuerLicht);
+      const fuell = new THREE.SpotLight(0xffe2c0, 0, 40, 0.3, 0.8, 2);
+      fuell.position.set(2.5, 6, 9);
+      fuell.target.position.set(0, 1.0, 0);
+      dorf.add(fuell); dorf.add(fuell.target);
+      const fensterLichter = [];
+      for (const x of [-2.6, 2.6]) {
+        const pl = new THREE.PointLight(0xffb060, 0, 9, 1.8);
+        pl.position.set(x, 1.7, HZ + 3.2);
+        dorf.add(pl); fensterLichter.push(pl);
+      }
+
+      // Laternenpfähle am Weg
+      const pfahlLampen = [];
+      for (const [x, z] of [[-1.5, 3.4], [1.5, 3.4], [-3.4, -0.6], [3.2, -1.0], [-6.5, -2], [6.8, -2.5]]) {
+        add(new THREE.CylinderGeometry(0.05, 0.06, 2.2, 8), M.dunkel, x, 1.1, z, dorf);
+        box(0.22, 0.05, 0.22, M.schnee, x, 2.48, z, dorf);
+        const gm = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        box(0.16, 0.24, 0.16, gm, x, 2.32, z, dorf);
+        const pl = new THREE.PointLight(0xffc27a, 0, 8, 1.7);
+        pl.position.set(x, 2.2, z);
+        dorf.add(pl);
+        pfahlLampen.push({ gm, pl, sp: glow(0xffc27a, x, 2.32, z, dorf, 1.3) });
+      }
+      // Polarkreis-Schild
+      {
+        add(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), M.holzDunkel, 4.2, 1.3, -1.2, dorf);
+        const schild = canvasTex(512, 160, (g, w, h) => {
+          g.fillStyle = "#f4efe3"; g.fillRect(0, 0, w, h);
+          g.strokeStyle = "#7a1c14"; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10);
+          g.fillStyle = "#7a1c14"; g.font = "bold 58px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+          g.fillText("ARCTIC CIRCLE", w / 2, h / 2 - 20);
+          g.font = "bold 36px sans-serif"; g.fillText("66° 33′ N", w / 2, h / 2 + 38);
+        });
+        const sm = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.5), new THREE.MeshStandardMaterial({ map: schild, roughness: 0.8 }));
+        sm.position.set(4.2, 2.25, -1.12); sm.rotation.y = -0.25;
+        dorf.add(sm);
+        box(1.7, 0.08, 0.14, M.schnee, 4.2, 2.53, -1.16, dorf).rotation.y = -0.25;
+      }
+
+      lichterGeo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+      lichterGeo.setAttribute("farbe", new THREE.Float32BufferAttribute(F, 3));
+      lichterGeo.setAttribute("groesse", new THREE.Float32BufferAttribute(G, 1));
+
+      // Dorf auf Bodenhöhe setzen (Plateau liegt auf 0)
+      dorf.position.y = hoehe(0, 0) - 0.02;
+      const BODEN = dorf.position.y;
+
+      // ---------- Schneefall ----------
+      const flockenMat = new THREE.ShaderMaterial({
+        uniforms: { uT: { value: 0 }, uA: { value: 0 }, uSkala: { value: 1 } },
+        transparent: true, depthWrite: false,
+        vertexShader: `
+          attribute float zufall; uniform float uT, uSkala; varying float vA;
+          void main() {
+            vec3 p = position;
+            p.y = mod(p.y - uT * (0.7 + zufall * 0.6), 14.0) - 1.0;
+            p.x += sin(uT * (0.6 + zufall) + zufall * 40.0) * 0.35;
+            p.z += cos(uT * 0.5 + zufall * 30.0) * 0.25;
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            gl_PointSize = clamp((0.022 + zufall * 0.02) * uSkala / -mv.z, 1.2, 22.0);
+            vA = smoothstep(0.3, 1.5, -mv.z);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform float uA; varying float vA;
+          void main() {
+            float r = length(gl_PointCoord - 0.5) * 2.0;
+            float a = smoothstep(1.0, 0.2, r);
+            gl_FragColor = vec4(vec3(0.85, 0.9, 1.0), a * uA * vA * 0.85);
+          }`,
+      });
+      {
+        const pos = [], zuf = [];
+        for (let i = 0; i < 9000; i++) { pos.push((rnd() - 0.5) * 30, rnd() * 14, -16 + rnd() * 30); zuf.push(rnd()); }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        g.setAttribute("zufall", new THREE.Float32BufferAttribute(zuf, 1));
+        const flocken = new THREE.Points(g, flockenMat);
+        flocken.frustumCulled = false;
+        flocken.position.y = BODEN;
+        land.add(flocken);
+      }
+
+      // ---------- Wolkenschichten ----------
+      const schichten = [];
+      for (const [hY, ox, oy, op] of [[9500, 0.42, 0.11, 0.7], [7000, 0.15, 0.52, 0.55], [5200, 0.63, 0.3, 0.45]]) {
+        const t = texWolken.clone();
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(0.09, 0.18); t.offset.set(ox, oy); t.needsUpdate = true;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(36000, 36000), new THREE.MeshBasicMaterial({
+          color: 0x6a7895, alphaMap: t, transparent: true, depthWrite: false, fog: false, opacity: op,
+        }));
+        m.rotation.x = -Math.PI / 2;
+        m.position.set(2000 - hY * 0.2, hY, -1500 + hY * 0.1);
+        land.add(m);
+        schichten.push({ m, hY, op });
+      }
+
+      // =====================================================================
+      // 3) WOLKEN-DURCHFLUG (Bildschirm-Ebene)
+      // =====================================================================
+      const flug = new THREE.Scene();
+      const flugCam = new THREE.OrthographicCamera(-0.5625, 0.5625, 1, -1, 0, 10);
+      const fetzen = [];
+      for (let i = 0; i < 14; i++) {
+        const t = texWolken.clone();
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(0.06, 0.06);
+        t.offset.set([0.12, 0.31, 0.58, 0.77, 0.05, 0.44][i % 6] + rnd() * 0.05, 0.25 + rnd() * 0.5);
+        t.needsUpdate = true;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({
+          color: 0xffffff, alphaMap: t, transparent: true, depthTest: false, depthWrite: false, opacity: 0,
+        }));
+        m.rotation.z = rnd() * Math.PI * 2;
+        flug.add(m);
+        fetzen.push({ m, start: 2.55 + i * 0.075 + rnd() * 0.08, dauer: 0.55 + rnd() * 0.35, x: (rnd() - 0.5) * 0.7, y: (rnd() - 0.5) * 1.1, s: 1.4 + rnd() * 1.6 });
+      }
+      const schleier = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.1), new THREE.MeshBasicMaterial({ color: 0x9aa6bd, transparent: true, depthTest: false, opacity: 0 }));
+      flug.add(schleier);
+
+      // =====================================================================
+      // Nachbearbeitung: Leuchten (Bloom)
+      // =====================================================================
+      const composer = new EffectComposer(renderer);
+      composer.setPixelRatio(1);
+      composer.setSize(1080, 1920);
+      const hauptPass = new RenderPass(globus, globusCam);
+      composer.addPass(hauptPass);
+      const flugPass = new RenderPass(flug, flugCam);
+      flugPass.clear = false;
+      flugPass.clearDepth = true;
+      composer.addPass(flugPass);
+      // Einzelne ungültige Pixel (NaN) abfangen, sonst verschmiert sie der Bloom übers ganze Bild
+      composer.addPass(new ShaderPass({
+        uniforms: { tDiffuse: { value: null } },
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform sampler2D tDiffuse; varying vec2 vUv;
+          void main() {
+            vec4 c = texture2D(tDiffuse, vUv);
+            bool ok = c.r == c.r && c.g == c.g && c.b == c.b && max(max(c.r, c.g), c.b) < 60000.0;
+            gl_FragColor = ok ? c : vec4(0.0, 0.0, 0.0, 1.0);
+          }`,
+      }));
+      const bloom = new UnrealBloomPass(new THREE.Vector2(540, 960), 0.85, 0.55, 0.82);
+      composer.addPass(bloom);
+      composer.addPass(new OutputPass());
+
+      // =====================================================================
+      // Zeitachse
+      // =====================================================================
+      const WECHSEL = 3.25;
+      const START_H = 22000, ENDE_H = 120;
+      const ziel = latLon(ZIEL.lat, ZIEL.lon);
+
+      const renderAt = (t) => {
+        for (const f of fetzen) {
+          const x = clamp((t - f.start) / f.dauer);
+          const sichtbar = x > 0 && x < 1;
+          f.m.visible = sichtbar;
+          if (!sichtbar) continue;
+          const s = f.s * (0.5 + x * 2.6);
+          f.m.scale.set(s, s, 1);
+          f.m.position.set(f.x * (1 + x * 1.5), f.y * (1 + x * 1.5), 0);
+          f.m.material.opacity = Math.sin(x * Math.PI) * 0.95;
+          const nacht = smooth(2.6, 3.4, t);
+          f.m.material.color.setRGB(lerp(0.42, 0.2, nacht), lerp(0.45, 0.23, nacht), lerp(0.55, 0.3, nacht));
+        }
+        schleier.material.opacity = smooth(2.95, 3.22, t) * (1 - smooth(3.28, 3.75, t)) * 0.92;
+        schleier.material.color.setRGB(0.16, 0.19, 0.26);
+
+        if (t < WECHSEL) {
+          // ----- Globus -----
+          const s = clamp(t / WECHSEL);
+          const hoch = Math.exp(Math.log(5.6) + (Math.log(0.05) - Math.log(5.6)) * Math.pow(s, 2.1));
+          const w = smooth(0.0, 2.9, t);
+          const lat = lerp(28, ZIEL.lat, w), lon = lerp(-18, ZIEL.lon, w);
+          globusCam.position.copy(latLon(lat, lon).multiplyScalar(1 + hoch));
+          const blick = v3(0, 0, 0).lerp(ziel, smooth(1.4, 0.12, hoch));
+          globusCam.up.set(0, 1, 0);
+          globusCam.lookAt(blick);
+          globusCam.near = Math.max(0.0004, hoch * 0.2);
+          globusCam.far = 200;
+          globusCam.updateProjectionMatrix();
+          wolken.rotation.y = t * 0.004;
+          ovalMat.uniforms.uT.value = t;
+          ovalMat.uniforms.uStark.value = 1 - smooth(2.4, 3.1, t);
+          bloom.strength = 0.75; bloom.threshold = 0.75; bloom.radius = 0.55;
+          hauptPass.scene = globus; hauptPass.camera = globusCam;
+        } else {
+          // ----- Lappland und Weihnachtsmann -----
+          const s = clamp((t - WECHSEL) / (6.9 - WECHSEL));
+          const e = 1 - Math.pow(1 - s, 2.2);
+          const absenk = Math.exp(Math.log(START_H) + (Math.log(ENDE_H) - Math.log(START_H)) * e);
+          const kipp = smooth(6.15, 9.4, t);
+          const dist = t < 6.9 ? absenk : lerp(ENDE_H, 10.5, Math.pow(smooth(6.9, 9.6, t), 0.8));
+          const el = lerp(89.6, 1.8, kipp) * D2R;
+          const az = lerp(-55, 0, smooth(WECHSEL, 9.8, t)) * D2R;
+          const zielPkt = v3(lerp(DORF.x, 0.15, kipp), BODEN + lerp(0, 2.75, kipp), lerp(DORF.z, -1.0, kipp));
+          const off = v3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(dist);
+          const naeher = smooth(9.4, 12, t) * 0.55; // langsames Heranschweben
+          kam.position.copy(zielPkt).add(off).add(v3(0, -naeher * 0.12, -naeher));
+          kam.up.set(0, 1, 0);
+          kam.lookAt(zielPkt.clone().add(v3(0, 0, -naeher)));
+          const camH = kam.position.y - BODEN;
+          kam.near = clamp(camH * 0.004, 0.08, 40);
+          kam.far = 160000;
+          kam.updateProjectionMatrix();
+          himmel.position.copy(kam.position);
+          himmelMat.uniforms.uT.value = t;
+
+          const nebel = Math.min(0.00011, 0.2 / Math.max(camH, 1));
+          land.fog.density = nebel;
+          lichterMat.uniforms.uNebel.value = nebel;
+          lichterMat.uniforms.uSkala.value = 1920 / (2 * Math.tan((kam.fov * D2R) / 2));
+          lichterMat.uniforms.uHell.value = 1;
+
+          for (const sc of schichten) {
+            const ueber = camH - sc.hY;
+            sc.m.material.opacity = sc.op * smooth(0, 2500, ueber);
+            sc.m.visible = ueber > 0;
+          }
+
+          // Schneefall
+          flockenMat.uniforms.uT.value = t;
+          flockenMat.uniforms.uA.value = smooth(6.6, 7.6, t);
+          flockenMat.uniforms.uSkala.value = lichterMat.uniforms.uSkala.value;
+
+          // Lichter gehen nacheinander an
+          const an = (a) => smooth(a, a + 0.4, t);
+          const fe = lerp(0.3, 1.05, an(7.15));
+          for (const m of fensterMats) m.emissiveIntensity = fe;
+          fensterLichter.forEach((l) => (l.intensity = 0.5 + an(7.15) * 4));
+          tuerLicht.intensity = 1 + an(7.15) * 5;
+          fuell.intensity = 60 + an(7.15) * 50;
+          birnen.forEach((b) => {
+            const k = smooth(7.45 + b.i * 0.012, 7.6 + b.i * 0.012, t) * (0.8 + 0.2 * Math.sin(t * 5 + b.i * 1.7));
+            b.mat.color.copy(b.farbe).multiplyScalar(2.6 * k);
+            b.sp.material.color.copy(b.farbe).multiplyScalar(0.9 * k);
+          });
+          pfahlLampen.forEach((p, i) => {
+            const k = smooth(7.8 + i * 0.07, 8.0 + i * 0.07, t);
+            p.gm.color.setRGB(3.0 * k, 2.3 * k, 1.4 * k);
+            p.pl.intensity = k * 2.5;
+            p.sp.material.color.setRGB(1.2 * k, 0.9 * k, 0.55 * k);
+          });
+          baumLichter.forEach((b) => {
+            const k = smooth(8.1 + b.u * 0.35, 8.2 + b.u * 0.35, t) * (0.75 + 0.25 * Math.sin(t * 4 + b.i * 2.3));
+            b.mat.color.copy(b.farbe).multiplyScalar(2.8 * k);
+            b.sp.material.color.copy(b.farbe).multiplyScalar(0.8 * k);
+          });
+          const st = an(8.5) * (0.9 + 0.1 * Math.sin(t * 6));
+          baumLichter.stern.mat.color.setRGB(3.2 * st, 2.5 * st, 1.0 * st);
+          baumLichter.stern.sp.material.color.setRGB(1.1 * st, 0.85 * st, 0.4 * st);
+          const flamme = 0.85 + 0.15 * Math.sin(t * 21.0) * Math.sin(t * 8.3 + 1.1);
+          const la = an(7.3) * flamme;
+          laternenGlas.color.setRGB(3.2 * la, 2.1 * la, 0.9 * la);
+          laternenGlow.material.color.setRGB(1.3 * la, 0.85 * la, 0.4 * la);
+          laternenLicht.intensity = la * 0.5;
+          const ns = an(8.6) * (0.75 + 0.25 * Math.sin(t * 7));
+          nase.material.color.setRGB(0.25 + 3.5 * ns, 0.02 + 0.3 * ns, 0.02 + 0.2 * ns);
+          naseGlow.material.color.setRGB(1.4 * ns, 0.12 * ns, 0.08 * ns);
+          naseLicht.intensity = ns * 0.6;
+
+          // Der Weihnachtsmann: atmet, wippt, hebt den Arm und winkt
+          const heb = smooth(7.5, 8.1, t);
+          const wink = Math.sin((t - 8.1) * 9.0) * smooth(8.0, 8.35, t);
+          armR.rotation.z = lerp(-0.12, -2.55, heb) + wink * 0.32;
+          armR.rotation.x = lerp(0.0, -0.25, heb);
+          armL.rotation.z = 0.18 + 0.02 * Math.sin(t * 2.0);
+          armL.rotation.x = -0.35;
+          laterne.rotation.x = 0.35 + 0.08 * Math.sin(t * 2.6);
+          laterne.rotation.z = -0.18;
+          const lach = smooth(7.25, 7.4, t) * (1 - smooth(8.2, 8.5, t));
+          const huepf = Math.abs(Math.sin((t - 7.25) * Math.PI / 0.3)) * lach; // "Ho! Ho! Ho!"
+          koerper.position.y = 0.012 * Math.sin(t * 2.2) + huepf * 0.035;
+          koerper.scale.set(1 + huepf * 0.012, 1 - huepf * 0.012, 1);
+          kopf.rotation.x = -0.12 * huepf + 0.03 * Math.sin(t * 1.3);
+          kopf.rotation.z = 0.06 * Math.sin(t * 1.7) * smooth(8, 9, t) + 0.05 * heb;
+          kopf.rotation.y = 0.05 * Math.sin(t * 0.9);
+          santa.rotation.y = 0.12 * Math.sin(t * 0.6) * 0.3;
+
+          bloom.strength = lerp(0.8, 0.5, kipp); bloom.threshold = 0.9; bloom.radius = 0.45;
+          hauptPass.scene = land; hauptPass.camera = kam;
+        }
+        composer.render();
+      };
+
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      window.__renderAt = renderAt;
+      renderAt(0);
+      window.__santaFertig();
+    </script>
+  </body>
+</html>

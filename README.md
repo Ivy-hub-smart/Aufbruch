@@ -277,3 +277,30 @@ npm run render:erde-bg && npm run render:erde
 
 Zeitpunkte der Lichter stehen unten in `index.html` (`an(7.15)`, `an(7.45)`, …), das Ziel auf
 der Erde oben (`ZIEL`, Breiten-/Längengrad).
+
+## Video: Earth Zoom zum Weihnachtsmann
+
+12 Sekunden im gleichen „Google-Earth-Zoom“-Stil: die Erde aus dem All mit leuchtendem
+Nordlicht-Oval über der Arktis, die Kamera stürzt nach Lappland, fliegt durch die Wolken,
+sinkt über verschneite Wälder und Dorflichter zum Polarkreis bei Rovaniemi und kippt vor eine
+rote Holzhütte mit Schneedach und Eiszapfen. Am Himmel tanzt das Nordlicht, es schneit. Vor
+der Hütte steht der Weihnachtsmann mit Laterne, lacht „Ho! Ho! Ho!“ und winkt. Daneben das
+Rentier mit roter Nase, der Schlitten mit Geschenkesack und ein Weihnachtsbaum. Nacheinander
+gehen Fenster, Lichterkette, Laternen, Baumlichter, Stern und Rentiernase an.
+Dazu: Weltraum-Klang, Whoosh, Winterwind, Schlittenglöckchen und „Jingle Bells“ als
+Glockenspiel (Melodie gemeinfrei, alles eigene Synthese).
+
+| Teil | Tool | Datei |
+|---|---|---|
+| Globus, Nordlicht, Lappland, Hütte, Weihnachtsmann, Rentier, Lichter, Kamera (Three.js mit Bloom) | HyperFrames + Three.js | `hyperframes/santa/index.html` |
+| Klang (lizenzfrei, eigene Synthese) | Python | `remotion/scripts/santa-sound.py` |
+| Erd-Texturen (NASA, aus dem npm-Paket `three-globe`) | – | `hyperframes/santa/assets/` |
+
+Fertiges Video: `remotion/out/earth-zoom-santa.mp4`
+
+```bash
+npm run render:santa-bg && npm run render:santa
+```
+
+Zeitpunkte der Lichter und des Winkens stehen unten in `index.html` (`an(7.15)`, `heb`,
+`wink`), das Ziel auf der Erde oben (`ZIEL`, Breiten-/Längengrad).
