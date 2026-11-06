@@ -12,12 +12,25 @@ const SANS = "Montserrat, sans-serif";
 export const autoFahrtSchema = z.object({
   video: z.string(),
   top: z.number(),
-  zeilen: z.array(z.object({ text: z.string(), sek: z.number() })),
+  // kamera: pro Zeile eine eigene Einstellung, damit es wie mehrere Kameras wirkt.
+  // zoom = Vergrösserung, x/y = Punkt im Video (0–1, z. B. Gesicht), der nach zielY (0–1) rückt,
+  // spiegeln = seitenverkehrt, drehung = Grad schräg
+  zeilen: z.array(
+    z.object({
+      text: z.string(),
+      sek: z.number(),
+      kamera: z
+        .object({ zoom: z.number(), x: z.number(), y: z.number(), zielY: z.number().optional(), spiegeln: z.boolean().optional(), drehung: z.number().optional() })
+        .optional(),
+    }),
+  ),
   frage: z.string().optional(),
   // musik: Beat in public/ (Standard folge-mir-beat.wav, 12 s), punch: bei jeder neuen Zeile
   // abwechselnd näher ans Gesicht springen (Jump-Cut-Gefühl, hält die Leute im Video)
   musik: z.string().optional(),
   punch: z.boolean().optional(),
+  // blitz: kurzer weisser Lichtblitz bei jedem Schnitt
+  blitz: z.boolean().optional(),
 });
 export type AutoFahrtProps = z.infer<typeof autoFahrtSchema>;
 
@@ -49,6 +62,24 @@ export const LAPTOP_ABEND: AutoFahrtProps = {
   frage: "Kommentiere START",
   musik: "ki-beat-32.wav",
   punch: true,
+};
+
+// Gleiche Geschichte, aber mit Beauty-Filter (weichere Haut, frischer, siehe README)
+// und bei jeder Zeile einer anderen Kameraeinstellung statt immer derselben Pose.
+// Gesicht liegt im Video bei etwa x 0.37, y 0.34.
+export const LAPTOP_ABEND_BEAUTY: AutoFahrtProps = {
+  ...LAPTOP_ABEND,
+  video: "laptop-abend-beauty.mp4",
+  punch: false,
+  blitz: true,
+  zeilen: [
+    { ...LAPTOP_ABEND.zeilen[0], kamera: { zoom: 1.05, x: 0.45, y: 0.5, zielY: 0.52 } }, // Totale: Laptop geht auf
+    { ...LAPTOP_ABEND.zeilen[1], kamera: { zoom: 1.6, x: 0.37, y: 0.34, zielY: 0.55 } }, // Nahaufnahme Gesicht
+    { ...LAPTOP_ABEND.zeilen[2], kamera: { zoom: 1.3, x: 0.4, y: 0.4, zielY: 0.55, spiegeln: true, drehung: -3 } }, // gespiegelt, schräg
+    { ...LAPTOP_ABEND.zeilen[3], kamera: { zoom: 1.25, x: 0.42, y: 0.5, zielY: 0.6, drehung: 2.5 } }, // halbnah, andere Seite schräg
+    { ...LAPTOP_ABEND.zeilen[4], kamera: { zoom: 1.55, x: 0.37, y: 0.36, zielY: 0.52, spiegeln: true } }, // nah, gespiegelt
+    { ...LAPTOP_ABEND.zeilen[5], kamera: { zoom: 1.35, x: 0.38, y: 0.38, zielY: 0.55 } }, // Lächeln zum Schluss
+  ],
 };
 
 // Fertigmachen im Bad: Gesicht in der Mitte, Text oben; Geschichte aus dem Bachelor/Master-Reel
@@ -131,23 +162,53 @@ const Frage: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-export const AutoFahrt: React.FC<AutoFahrtProps> = ({ video, top, zeilen, frage, musik, punch }) => {
+const B = 1080;
+const H = 1920;
+type Kamera = NonNullable<AutoFahrtProps["zeilen"][number]["kamera"]>;
+
+// Verschiebung + Zoom so, dass der Punkt (x, y) mittig auf Höhe zielY liegt.
+// Begrenzt so, dass auch gedreht nie ein schwarzer Rand sichtbar wird.
+const kameraTransform = (k: Kamera, seit: number) => {
+  const zoom = k.zoom * (1 + seit * 0.0012); // langsames Hineinfahren
+  const w = (Math.abs(k.drehung ?? 0) * Math.PI) / 180;
+  const ex = (B / 2) * Math.cos(w) + (H / 2) * Math.sin(w);
+  const ey = (B / 2) * Math.sin(w) + (H / 2) * Math.cos(w);
+  const zielY = (k.zielY ?? 0.5) * H;
+  const tx = Math.min(B / 2 - ex, Math.max(B / 2 + ex - B * zoom, B / 2 - k.x * B * zoom));
+  const ty = Math.min(H / 2 - ey, Math.max(H / 2 + ey - H * zoom, zielY - k.y * H * zoom));
+  return `translate(${tx}px, ${ty}px) scale(${zoom})`;
+};
+
+export const AutoFahrt: React.FC<AutoFahrtProps> = ({ video, top, zeilen, frage, musik, punch, blitz }) => {
   const { fps, durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
-  // welche Zeile läuft gerade? (für den Zoom-Sprung)
+  // welche Zeile läuft gerade, und seit wie vielen Frames?
   let nr = 0;
+  let start = 0;
   for (let i = 0, f = 0; i < zeilen.length; i++) {
-    if (frame >= f) nr = i;
+    if (frame >= f) {
+      nr = i;
+      start = f;
+    }
     f += Math.round(zeilen[i].sek * fps);
   }
-  // abwechselnd 1.0 und 1.14, dazu ein langsamer Drift, Mittelpunkt auf Gesichtshöhe
-  const zoom = punch ? (nr % 2 ? 1.14 : 1.0) + frame * 0.0006 : 1;
+  const seit = frame - start;
+  const k = zeilen[nr].kamera;
+  // punch: abwechselnd 1.0 und 1.14, dazu ein langsamer Drift, Mittelpunkt auf Gesichtshöhe
+  const pz = punch ? (nr % 2 ? 1.14 : 1.0) + frame * 0.0006 : 1;
+  const innen = k ? kameraTransform(k, seit) : `translate(${B / 2}px, ${H * 0.35}px) scale(${pz}) translate(${-B / 2}px, ${-H * 0.35}px)`;
+  const aussen = k ? `rotate(${k.drehung ?? 0}deg) scaleX(${k.spiegeln ? -1 : 1})` : undefined;
+  // Lichtblitz in den ersten 5 Frames jedes Schnitts (nicht beim allerersten Bild)
+  const hell = blitz && nr > 0 ? Math.max(0, 1 - seit / 5) * 0.75 : 0;
   let from = 0;
   return (
-    <AbsoluteFill style={{ background: "black" }}>
-      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 35%" }}>
-        <OffthreadVideo src={staticFile(video)} muted />
+    <AbsoluteFill style={{ background: "black", overflow: "hidden" }}>
+      <AbsoluteFill style={{ transform: aussen }}>
+        <div style={{ position: "absolute", left: 0, top: 0, width: B, height: H, transformOrigin: "0 0", transform: innen }}>
+          <OffthreadVideo src={staticFile(video)} muted style={{ width: B, height: H }} />
+        </div>
       </AbsoluteFill>
+      {hell > 0 && <AbsoluteFill style={{ background: "white", opacity: hell }} />}
       {/* leiser eigener Beat; in Instagram lieber einen Trend-Sound darüberlegen */}
       <Audio src={staticFile(musik ?? "folge-mir-beat.wav")} volume={(f) => 0.6 * Math.min(1, (durationInFrames - f) / 20)} />
       {zeilen.map((z, i) => {

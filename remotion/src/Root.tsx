@@ -6,7 +6,7 @@ import { ZweifelTraum } from "./ZweifelTraum";
 import { Zwilling } from "./Zwilling";
 import { KiTippVideo, kiTippSchema } from "./KiTippVideo";
 import { KI_TIPPS, SERIE } from "./kiTipps";
-import { AUTO_FAHRT, LAPTOP_ABEND, FERTIG_MACHEN, FERTIG_MACHEN_DU, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
+import { AUTO_FAHRT, LAPTOP_ABEND, LAPTOP_ABEND_BEAUTY, FERTIG_MACHEN, FERTIG_MACHEN_DU, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
 import { GEDANKEN, Gedanke, gedankeDauer, gedankeSchema } from "./Gedanke";
 import { PDF_STORIES, VORSTELLUNG, Vorstellung, vorstellungSchema } from "./Vorstellung";
 import { HOOK_PROMPT, Sprechvideo, sprechvideoSchema } from "./Sprechvideo";
@@ -119,6 +119,16 @@ export const RemotionRoot: React.FC = () => (
     width={1080}
     height={1920}
     defaultProps={LAPTOP_ABEND}
+  />
+  <Composition
+    id="LaptopAbendBeauty"
+    component={AutoFahrt}
+    schema={autoFahrtSchema}
+    durationInFrames={autoFahrtDauer(LAPTOP_ABEND_BEAUTY)} // 16 Sekunden
+    fps={30}
+    width={1080}
+    height={1920}
+    defaultProps={LAPTOP_ABEND_BEAUTY}
   />
   {STORIES.map((story, i) => (
     <Still key={i} id={`Story${i + 1}`} component={Story} schema={storySchema} width={1080} height={1920} defaultProps={story} />

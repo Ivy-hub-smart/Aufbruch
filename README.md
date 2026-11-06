@@ -166,6 +166,28 @@ darunter der Ukulele-Beat `ki-beat-32.wav`, am Schluss ausgeblendet.
 Gleiche Vorlage wie „Autofahrt“ (`remotion/src/AutoFahrt.tsx`, `LAPTOP_ABEND`),
 Video `remotion/out/laptop-abend.mp4` (`npm run render:laptop-abend`).
 
+### Version „schöner“: Beauty-Filter und wechselnde Kamera
+
+`remotion/out/laptop-abend-beauty.mp4` (`npm run render:laptop-abend-beauty`, `LAPTOP_ABEND_scale=1080:1920,split=3[a][b][c];[b]bilateral=sigmaS=12:sigmaR=0.06,bilateral=sigmaS=6:sigmaR=0.05[s];[a][s]blend=all_expr='A*0.3+B*0.7'[m];[c]gblur=sigma=25[g];[m][g]blend=all_mode=softlight:all_opacity=0.25,curves=all='0/0 0.25/0.235 0.5/0.52 0.75/0.78 1/1',eq=saturation=1.06:contrast=1.06,colorbalance=rs=0.015:gs=-0.015:bs=0.0:rm=0.02:gm=-0.015:bm=0.0:rh=0:bh=0.01,unsharp=3:3:0.35,vignette=PI/7`):
+
+- **Beauty-Filter** (wie ein Handy-Filter, aber natürlich): Haut geglättet, Augenringe weicher,
+  etwas heller und rosiger, Augen und Haare bleiben scharf, leichte Vignette.
+- **Statt immer derselben Pose** bei jeder Zeile eine andere Einstellung, wie mit mehreren Kameras:
+  Totale (Laptop geht auf) → Nahaufnahme → gespiegelt und schräg → halbnah, andere Seite schräg →
+  nah, gespiegelt → Lächeln. Bei jedem Schnitt ein kurzer Lichtblitz. Die Einstellungen stehen pro Zeile
+  unter `kamera` (`zoom`, Punkt `x`/`y`, `zielY`, `spiegeln`, `drehung`).
+
+```bash
+ffmpeg -ss 1.6 -i IMG_8411.mov -t 16 -filter_complex "scale=1080:1920,split=3[a][b][c];[b]bilateral=sigmaS=12:sigmaR=0.06,bilateral=sigmaS=6:sigmaR=0.05[s];[a][s]blend=all_expr='A*0.3+B*0.7'[m];[c]gblur=sigma=25[g];[m][g]blend=all_mode=softlight:all_opacity=0.25,curves=all='0/0 0.25/0.235 0.5/0.52 0.75/0.78 1/1',eq=saturation=1.06:contrast=1.06,colorbalance=rs=0.015:gs=-0.015:bs=0.0:rm=0.02:gm=-0.015:bm=0.0:rh=0:bh=0.01,unsharp=3:3:0.35,vignette=PI/7,fps=30,format=yuv420p" -an \
+  -c:v libx264 -crf 19 remotion/public/laptop-abend-beauty.mp4
+```
+
+Eine wirklich neue Pose lässt sich aus dem Video nicht herzaubern. Für die nächste Aufnahme:
+Handy auf Augenhöhe oder leicht darüber (nie von unten), Gesicht zum Fenster drehen statt mit dem
+Fenster im Rücken, Laptop seitlich statt vor dem Körper, und pro Satz die Pose wechseln
+(stehend mit Kaffee, im Gehen, Laptop zuklappen und in die Kamera lächeln, Blick über die Schulter).
+Gleich am Anfang eine Bewegung zur Kamera hin hält die Leute im Video.
+
 Tipp zum Posten: in Instagram einen Trend-Sound leise darunterlegen, Caption mit der Frage
 beginnen („Was würdest du mit 1 Stunde pro Abend aufbauen?“), auf START-Kommentare mit dem Guide antworten.
 
