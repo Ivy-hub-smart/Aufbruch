@@ -153,6 +153,22 @@ Gleiche Vorlage wie „Autofahrt“ (`remotion/src/AutoFahrt.tsx`, `FERTIG_MACHE
 Variante mit „Du“-Hook („Du hast alles richtig gemacht – und trotzdem reicht es nicht?“):
 `FERTIG_MACHEN_DU`, Video `remotion/out/fertig-machen-du.mp4`.
 
+## Reel „Laptop-Abend“
+
+16 Sekunden aus IMG_8411.mov (`remotion/public/laptop-abend.mp4`, ab 1,6 s: ich klappe den
+Laptop auf, am Schluss lächle ich). Die gesprochenen Sätze trugen kein Reel, darum ist die Stimme
+stumm und die Geschichte steht oben im Bild: „„Was machst du eigentlich jeden Abend am Laptop?““ →
+„Ich baue mir ein zweites Einkommen auf. Mit KI.“ → „Ohne zu kündigen. Ohne Vorwissen.“ →
+„Jeden Abend ein kleiner Schritt.“ → „In einem Jahr bin ich froh, dass ich heute angefangen habe.“
+→ „Willst du wissen, wie? 👇“, unten ab 2 s die Pille „Kommentiere START“. Bei jeder neuen Zeile
+springt das Bild abwechselnd näher ans Gesicht (`punch`), Bild etwas wärmer und kräftiger,
+darunter der Ukulele-Beat `ki-beat-32.wav`, am Schluss ausgeblendet.
+Gleiche Vorlage wie „Autofahrt“ (`remotion/src/AutoFahrt.tsx`, `LAPTOP_ABEND`),
+Video `remotion/out/laptop-abend.mp4` (`npm run render:laptop-abend`).
+
+Tipp zum Posten: in Instagram einen Trend-Sound leise darunterlegen, Caption mit der Frage
+beginnen („Was würdest du mit 1 Stunde pro Abend aufbauen?“), auf START-Kommentare mit dem Guide antworten.
+
 ## Gedanken-Reels (Stil der erfolgreichsten Reels)
 
 Sand unter Wasser (HyperFrames, `hyperframes/wasser/index.html`), weisse Schrift,

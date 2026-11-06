@@ -14,6 +14,10 @@ export const autoFahrtSchema = z.object({
   top: z.number(),
   zeilen: z.array(z.object({ text: z.string(), sek: z.number() })),
   frage: z.string().optional(),
+  // musik: Beat in public/ (Standard folge-mir-beat.wav, 12 s), punch: bei jeder neuen Zeile
+  // abwechselnd näher ans Gesicht springen (Jump-Cut-Gefühl, hält die Leute im Video)
+  musik: z.string().optional(),
+  punch: z.boolean().optional(),
 });
 export type AutoFahrtProps = z.infer<typeof autoFahrtSchema>;
 
@@ -27,6 +31,24 @@ export const AUTO_FAHRT: AutoFahrtProps = {
     { text: "Folge mir – ich nehme dich mit. 🌿", sek: 2.2 },
   ],
   frage: "Kennst du das? Schreib ein 🙋‍♀️",
+};
+
+// Laptop-Abend (IMG_8411.mov): ich klappe den Laptop auf und erzähle, warum.
+// Gesicht in der Mitte, Laptop unten, darum Text oben; Neugier-Hook als Zitat.
+export const LAPTOP_ABEND: AutoFahrtProps = {
+  video: "laptop-abend.mp4",
+  top: 150,
+  zeilen: [
+    { text: "„Was machst du eigentlich jeden Abend am Laptop?“", sek: 2.8 },
+    { text: "Ich baue mir ein zweites Einkommen auf. Mit KI.", sek: 2.6 },
+    { text: "Ohne zu kündigen. Ohne Vorwissen.", sek: 2.4 },
+    { text: "Jeden Abend ein kleiner Schritt.", sek: 2.6 },
+    { text: "In einem Jahr bin ich froh, dass ich heute angefangen habe.", sek: 3.0 },
+    { text: "Willst du wissen, wie? 👇", sek: 2.6 },
+  ],
+  frage: "Kommentiere START",
+  musik: "ki-beat-32.wav",
+  punch: true,
 };
 
 // Fertigmachen im Bad: Gesicht in der Mitte, Text oben; Geschichte aus dem Bachelor/Master-Reel
@@ -109,14 +131,25 @@ const Frage: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-export const AutoFahrt: React.FC<AutoFahrtProps> = ({ video, top, zeilen, frage }) => {
+export const AutoFahrt: React.FC<AutoFahrtProps> = ({ video, top, zeilen, frage, musik, punch }) => {
   const { fps, durationInFrames } = useVideoConfig();
+  const frame = useCurrentFrame();
+  // welche Zeile läuft gerade? (für den Zoom-Sprung)
+  let nr = 0;
+  for (let i = 0, f = 0; i < zeilen.length; i++) {
+    if (frame >= f) nr = i;
+    f += Math.round(zeilen[i].sek * fps);
+  }
+  // abwechselnd 1.0 und 1.14, dazu ein langsamer Drift, Mittelpunkt auf Gesichtshöhe
+  const zoom = punch ? (nr % 2 ? 1.14 : 1.0) + frame * 0.0006 : 1;
   let from = 0;
   return (
     <AbsoluteFill style={{ background: "black" }}>
-      <OffthreadVideo src={staticFile(video)} muted />
+      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 35%" }}>
+        <OffthreadVideo src={staticFile(video)} muted />
+      </AbsoluteFill>
       {/* leiser eigener Beat; in Instagram lieber einen Trend-Sound darüberlegen */}
-      <Audio src={staticFile("folge-mir-beat.wav")} volume={0.6} />
+      <Audio src={staticFile(musik ?? "folge-mir-beat.wav")} volume={(f) => 0.6 * Math.min(1, (durationInFrames - f) / 20)} />
       {zeilen.map((z, i) => {
         const start = from;
         from += Math.round(z.sek * fps);
