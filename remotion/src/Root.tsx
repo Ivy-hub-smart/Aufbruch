@@ -13,6 +13,7 @@ import { HOOK_PROMPT, Sprechvideo, sprechvideoSchema } from "./Sprechvideo";
 import { STORIES, Story, storySchema } from "./Story";
 import { Hoppelhase } from "./Hoppelhase";
 import { Hoppelhase3D } from "./Hoppelhase3D";
+import { KI_PROMPT, KiPrompt, kiPromptSchema } from "./KiPrompt";
 import { FOLGE_MIR, FolgeMir, folgeMirDauer, folgeMirSchema } from "./FolgeMir";
 
 export const RemotionRoot: React.FC = () => (
@@ -157,6 +158,16 @@ export const RemotionRoot: React.FC = () => (
     fps={30}
     width={1080}
     height={1920}
+  />
+  <Composition
+    id="KiPrompt"
+    component={KiPrompt}
+    schema={kiPromptSchema}
+    durationInFrames={Math.round(KI_PROMPT.dauer * 30)}
+    fps={30}
+    width={1080}
+    height={1920}
+    defaultProps={KI_PROMPT}
   />
   </>
 );

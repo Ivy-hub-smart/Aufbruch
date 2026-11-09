@@ -198,6 +198,25 @@ ffmpeg -i original.mp4 -c:v libvpx-vp9 -i remotion/public/hook-prompt-ich.webm -
   -an remotion/public/hook-prompt-portrait.mp4
 ```
 
+## Reel „Kopier diesen Prompt“ (Trend: KI-Chat auf dem Laptop)
+
+19 Sekunden im Stil der „Es ist offiziell 😳“-Reels: abgefilmter Laptop vor dem Fenster
+(leicht wackelnd), im KI-Chat tippe ich (mit meinem Bild) den Prompt «Gib mir eine Liste von
+lokalen Unternehmen und Nischen in meiner Stadt, die 2026 von KI-Automationen profitieren –
+und denen ich solche Lösungen für 500 Franken verkaufen kann.» Die KI antwortet mit fünf
+Nischen (Coiffeur, Handwerker, Physio, Restaurants, Treuhand), jede leuchtet kurz auf. Unten
+fette Untertitel mit einem Wort im roten Kasten: „ES IST OFFIZIELL – KOPIER DIESEN PROMPT – …
+AB 500 FRANKEN – PRO AUTOMATION“. Schluss: ich im Blazer, „Willst du den ganzen Prompt?
+Kommentiere START 👇“. Klang: Ukulele-Beat, Tastatur-Klicks, Senden-Plopp, Pop pro Nische,
+Whoosh pro Untertitel, Riser und Aufschlag vor dem Aufruf.
+
+Texte und Zeiten in `remotion/src/KiPrompt.tsx` (`KI_PROMPT`), Klang `remotion/scripts/ki-prompt-sound.py`
+(Zeiten müssen dazu passen), Video `remotion/out/ki-prompt.mp4`.
+
+```bash
+npm run render:ki-prompt
+```
+
 ## Video: Hoppelhase
 
 8 Sekunden auf einer Frühlingswiese, für Kinder: ein hellbrauner Hase mit riesigen Ohren,
