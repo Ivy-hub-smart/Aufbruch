@@ -80,6 +80,17 @@ export const GEDANKEN: GedankeProps[] = [
     ],
     frage: "Kommentiere START 👇",
   },
+  // Wochenplan Montag: Spruch zum Speichern
+  {
+    hook: "Du musst nicht perfekt sein.",
+    zeilen: [
+      { text: "Du musst nicht perfekt sein, um anzufangen.", fett: true },
+      { text: "Du musst nur anfangen," },
+      { text: "um besser zu werden.", fett: true },
+      { text: "Speichere dir das für schwache Tage." },
+    ],
+    frage: "Speichern & teilen 🤍",
+  },
 ];
 
 const HOOK = 48; // 1,6 s Riesen-Hook, danach der Textblock
