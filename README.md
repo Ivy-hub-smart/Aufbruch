@@ -171,6 +171,9 @@ npm run render:wasser && npm run render:gedanken
 auf Titel- und Schlussfolie. Thema: die 3-Konten-Methode. Vorlage für alle weiteren Finanz- und
 Immobilien-Karussells: `remotion/src/FinanzKarussell.tsx` (`DREI_KONTEN`),
 Bilder `remotion/out/drei-konten-1.png` bis `-6.png` (`npm run render:drei-konten`).
+Gleiche Texte im Stil «weich & natürlich» (warmer Sand, Salbei, Serifenschrift Cormorant Garamond,
+Foto am See im Bogen): `remotion/src/WeichKarussell.tsx`, Bilder `remotion/out/drei-konten-weich-1.png`
+bis `-6.png` (`npm run render:drei-konten-weich`).
 Stil-Vorschläge zum Vergleich: `remotion/out/stil-hell.png`, `-dunkel.png`, `-notiz.png`.
 
 ## Karussell Montag: «Du musst nicht perfekt sein»

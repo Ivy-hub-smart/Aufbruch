@@ -9,6 +9,7 @@ import { KI_TIPPS, SERIE } from "./kiTipps";
 import { AUTO_FAHRT, FERTIG_MACHEN, FERTIG_MACHEN_DU, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
 import { GEDANKEN, Gedanke, gedankeDauer, gedankeSchema } from "./Gedanke";
 import { DREI_KONTEN, FinanzKarussell, finanzSchema } from "./FinanzKarussell";
+import { WeichKarussell } from "./WeichKarussell";
 import { StilProbe, stilProbeSchema } from "./StilProbe";
 import { MONTAG, Karussell, karussellSchema } from "./Karussell";
 import { PDF_STORIES, VORSTELLUNG, Vorstellung, vorstellungSchema } from "./Vorstellung";
@@ -137,6 +138,9 @@ export const RemotionRoot: React.FC = () => (
   ))}
   {DREI_KONTEN.map((folie, i) => (
     <Still key={`k${i}`} id={`DreiKonten${i + 1}`} component={FinanzKarussell} schema={finanzSchema} width={1080} height={1350} defaultProps={folie} />
+  ))}
+  {DREI_KONTEN.map((folie, i) => (
+    <Still key={`w${i}`} id={`DreiKontenWeich${i + 1}`} component={WeichKarussell} schema={finanzSchema} width={1080} height={1350} defaultProps={folie} />
   ))}
   {MONTAG.map((folie, i) => (
     <Still key={`m${i}`} id={`Montag${i + 1}`} component={Karussell} schema={karussellSchema} width={1080} height={1350} defaultProps={folie} />

@@ -32,7 +32,7 @@ export const DREI_KONTEN: FinanzProps[] = [
     art: "titel",
     kicker: "FINANZEN · EINFACH",
     titel: "Am Ende vom Monat ist nichts übrig?",
-    zeilen: ["So änderst du das mit 3 Konten."],
+    zeilen: ["So änderst du das mit 3\u00a0Konten."],
     knopf: "Wisch weiter 👉",
     nummer: "1/6",
   },
