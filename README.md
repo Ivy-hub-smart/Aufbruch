@@ -165,6 +165,14 @@ Videos `remotion/out/gedanke-1.mp4` bis `gedanke-3.mp4`.
 npm run render:wasser && npm run render:gedanken
 ```
 
+## Karussell «Am Ende vom Monat ist nichts übrig?» (Stil A, Finanzen)
+
+6 Folien (1080×1350) im neuen Stil «hell & klar»: Creme, Waldgrün, Goldstrich, Foto im Blazer
+auf Titel- und Schlussfolie. Thema: die 3-Konten-Methode. Vorlage für alle weiteren Finanz- und
+Immobilien-Karussells: `remotion/src/FinanzKarussell.tsx` (`DREI_KONTEN`),
+Bilder `remotion/out/drei-konten-1.png` bis `-6.png` (`npm run render:drei-konten`).
+Stil-Vorschläge zum Vergleich: `remotion/out/stil-hell.png`, `-dunkel.png`, `-notiz.png`.
+
 ## Karussell Montag: «Du musst nicht perfekt sein»
 
 5 Folien (1080×1350) mit meinem Foto am See: Folie 1 und 5 scharf mit Text im Himmel,
