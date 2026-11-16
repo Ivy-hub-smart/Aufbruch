@@ -6,12 +6,13 @@ import { AbsoluteFill, Img, staticFile } from "remotion";
 import type { FinanzProps } from "./FinanzKarussell";
 
 // Stil «weich & natürlich» (4:5): warmer Sand, Salbei & Rosé als weiche Formen,
-// elegante Serifenschrift, Foto am See im Bogen. Nutzt dieselben Texte wie Stil A.
+// elegante Serifenschrift, runde grüne Tipp-Karten, Foto im Blazer im Bogen. Nutzt dieselben Texte wie Stil A.
 const SERIF = "'Cormorant Garamond', Georgia, serif";
 const SANS = "Montserrat, sans-serif";
 const BRAUN = "#4a3a2e";
 const TEXT = "#6b5a4c";
 const SALBEI = "#8a9a7b";
+const GRUEN = "#5e7d62"; // sanftes Grün für Tipp-Karten und Knöpfe
 
 // weiche, unscharfe Farbflecken im Hintergrund
 const Hintergrund: React.FC = () => (
@@ -28,12 +29,12 @@ const Ranke: React.FC = () => <div style={{ fontFamily: SERIF, fontSize: 44, col
 
 const Knopf: React.FC<{ text?: string }> = ({ text }) =>
   text ? (
-    <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 32, color: BRAUN, background: "rgba(255,255,255,0.65)", border: "2px solid rgba(138,154,123,0.5)", padding: "18px 36px", borderRadius: 999, display: "inline-block" }}>
+    <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 32, color: "white", background: GRUEN, boxShadow: "0 10px 26px rgba(94,125,98,0.3)", padding: "20px 40px", borderRadius: 999, display: "inline-block" }}>
       {text}
     </div>
   ) : null;
 
-// Foto am See in einem Bogen (oben rund), weich umrandet
+// Foto im Blazer in einem Bogen (oben rund), weich umrandet
 const Bogenfoto: React.FC<{ breite: number; hoehe: number; style?: React.CSSProperties }> = ({ breite, hoehe, style }) => (
   <div
     style={{
@@ -47,11 +48,9 @@ const Bogenfoto: React.FC<{ breite: number; hoehe: number; style?: React.CSSProp
       ...style,
     }}
   >
-    {/* Foto 1080×1920, ich sitze bei etwa 72 % / 74 %: doppelt so breit wie der Bogen, so verschoben, dass ich mittig unten sitze */}
-    <Img
-      src={staticFile("foto-hocke.jpg")}
-      style={{ position: "absolute", width: breite * 2, height: (breite * 2 * 1920) / 1080, left: breite / 2 - 0.72 * breite * 2, top: hoehe * 0.56 - (0.74 * breite * 2 * 1920) / 1080 }}
-    />
+    {/* Freisteller im Blazer (701×1024) auf weichem Salbei-Rosé-Verlauf, Gesicht im oberen Drittel */}
+    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, #dfe6d6 0%, #f0ddd0 100%)" }} />
+    <Img src={staticFile("foto-blazer.png")} style={{ position: "absolute", width: breite * 1.2, left: -breite * 0.1, top: hoehe * 0.07 }} />
   </div>
 );
 
@@ -70,7 +69,7 @@ export const WeichKarussell: React.FC<FinanzProps> = ({ art, kicker, zahl, titel
     return (
       <AbsoluteFill>
         <Hintergrund />
-        <Bogenfoto breite={titelFolie ? 430 : 330} hoehe={titelFolie ? 620 : 430} style={{ right: titelFolie ? 70 : 60, bottom: titelFolie ? 120 : 110 }} />
+        <Bogenfoto breite={titelFolie ? 430 : 400} hoehe={titelFolie ? 620 : 540} style={{ right: titelFolie ? 70 : 60, bottom: titelFolie ? 120 : 110 }} />
         <div style={{ position: "absolute", left: 80, top: 120, width: titelFolie ? 900 : 920 }}>
           <Kicker text={kicker} />
           <div style={{ fontFamily: SERIF, fontWeight: 600, fontSize: titelFolie ? 108 : 92, lineHeight: 1.02, color: BRAUN, width: titelFolie ? 860 : 900 }}>{titel}</div>
@@ -109,15 +108,14 @@ export const WeichKarussell: React.FC<FinanzProps> = ({ art, kicker, zahl, titel
             style={{
               marginTop: 60,
               fontFamily: SANS,
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: 40,
               lineHeight: 1.4,
-              color: BRAUN,
-              background: "rgba(255,255,255,0.6)",
-              border: "2px solid rgba(255,255,255,0.9)",
-              boxShadow: "0 14px 40px rgba(74,58,46,0.1)",
-              padding: "36px 42px",
-              borderRadius: 40,
+              color: "white",
+              background: GRUEN,
+              boxShadow: "0 16px 40px rgba(94,125,98,0.28)",
+              padding: "40px 48px",
+              borderRadius: 56,
             }}
           >
             {tipp}
