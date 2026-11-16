@@ -176,6 +176,13 @@ runde grüne Tipp-Karten, Foto im Blazer frei vor weichem Kreis): `remotion/src/
 bis `-6.png` (`npm run render:drei-konten-weich`).
 Stil-Vorschläge zum Vergleich: `remotion/out/stil-hell.png`, `-dunkel.png`, `-notiz.png`.
 
+## Neue Vorstellung zum Anpinnen (weicher Stil)
+
+4 Folien: «Hi, ich bin Yvonne. Ich zeige dir, wie du finanziell freier wirst.», Warum ich das mache,
+Das erwartet dich (Geld, Schulden, Eigenheim, 2. Einkommen), «Folge mir & sag Hallo!».
+Texte in `remotion/src/WeichKarussell.tsx` (`VORSTELLUNG_WEICH`), Bilder `remotion/out/vorstellung-weich-1.png`
+bis `-4.png` (`npm run render:vorstellung-weich`).
+
 ## Karussell Montag: «Du musst nicht perfekt sein»
 
 5 Folien (1080×1350) mit meinem Foto am See: Folie 1 und 5 scharf mit Text im Himmel,

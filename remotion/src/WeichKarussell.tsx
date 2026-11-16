@@ -5,6 +5,42 @@ import "@fontsource/cormorant-garamond/600-italic.css";
 import { AbsoluteFill, Img, staticFile } from "remotion";
 import type { FinanzProps } from "./FinanzKarussell";
 
+// Neue Vorstellung zum Anpinnen im weichen Stil
+export const VORSTELLUNG_WEICH: FinanzProps[] = [
+  {
+    art: "titel",
+    kicker: "SCHÖN, BIST DU DA",
+    titel: "Hi, ich bin Yvonne.",
+    zeilen: ["Ich zeige dir, wie du finanziell freier wirst."],
+    knopf: "Wisch weiter 👉",
+    nummer: "1/4",
+  },
+  {
+    art: "inhalt",
+    kicker: "WARUM ICH DAS MACHE",
+    titel: "Geld muss nicht kompliziert sein.",
+    zeilen: ["Ich kenne mich mit Finanzen und Immobilien aus.", "Und ich weiss: Viele fühlen sich beim Thema Geld allein gelassen."],
+    tipp: "Hier bekommst du Wissen, das man wirklich versteht. 🤍",
+    nummer: "2/4",
+  },
+  {
+    art: "inhalt",
+    kicker: "DAS ERWARTET DICH",
+    titel: "Hier lernst du:",
+    zeilen: ["💰 Ordnung im Geld", "🌿 Raus aus den Schulden", "🏡 Dein Weg zum Eigenheim", "✨ Ein zweites Einkommen"],
+    tipp: "Einfach erklärt. Schritt für Schritt.",
+    nummer: "3/4",
+  },
+  {
+    art: "schluss",
+    kicker: "LUST, MITZUKOMMEN?",
+    titel: "Folge mir & sag Hallo!",
+    zeilen: ["Schreib mir in die Kommentare:", "Was ist dein grösstes Geldziel?"],
+    knopf: "Jetzt folgen 🤍",
+    nummer: "4/4",
+  },
+];
+
 // Stil «weich & natürlich» (4:5): warmer Sand, Salbei & Rosé als weiche Formen,
 // elegante Serifenschrift, runde grüne Tipp-Karten, Foto im Blazer frei vor weichem Kreis. Nutzt dieselben Texte wie Stil A.
 const SERIF = "'Cormorant Garamond', Georgia, serif";

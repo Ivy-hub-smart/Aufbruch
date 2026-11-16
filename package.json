@@ -24,6 +24,7 @@
     "render:gedanken": "cd remotion && for i in 1 2 3 4 5 6 7; do npx remotion render Gedanke$i out/gedanke-$i.mp4 || exit 1; done",
     "render:drei-konten": "cd remotion && for i in 1 2 3 4 5 6; do npx remotion still DreiKonten$i out/drei-konten-$i.png || exit 1; done",
     "render:drei-konten-weich": "cd remotion && for i in 1 2 3 4 5 6; do npx remotion still DreiKontenWeich$i out/drei-konten-weich-$i.png || exit 1; done",
+    "render:vorstellung-weich": "cd remotion && for i in 1 2 3 4; do npx remotion still VorstellungWeich$i out/vorstellung-weich-$i.png || exit 1; done",
     "render:montag": "cd remotion && for i in 1 2 3 4 5; do npx remotion still Montag$i out/montag-$i.png || exit 1; done",
     "render:vorstellung": "cd remotion && for i in 1 2 3 4; do npx remotion still Vorstellung$i out/vorstellung-$i.png || exit 1; done",
     "render:pdf-stories": "cd remotion && for i in 1 2; do npx remotion still PdfStory$i out/pdf-story-$i.png || exit 1; done",
