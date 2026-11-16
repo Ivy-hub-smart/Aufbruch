@@ -6,7 +6,7 @@ import { AbsoluteFill, Img, staticFile } from "remotion";
 import type { FinanzProps } from "./FinanzKarussell";
 
 // Stil «weich & natürlich» (4:5): warmer Sand, Salbei & Rosé als weiche Formen,
-// elegante Serifenschrift, runde grüne Tipp-Karten, Foto im Blazer im Bogen. Nutzt dieselben Texte wie Stil A.
+// elegante Serifenschrift, runde grüne Tipp-Karten, Foto im Blazer frei vor weichem Kreis. Nutzt dieselben Texte wie Stil A.
 const SERIF = "'Cormorant Garamond', Georgia, serif";
 const SANS = "Montserrat, sans-serif";
 const BRAUN = "#4a3a2e";
@@ -34,31 +34,30 @@ const Knopf: React.FC<{ text?: string }> = ({ text }) =>
     </div>
   ) : null;
 
-// Foto im Blazer in einem Bogen (oben rund), weich umrandet
-const Bogenfoto: React.FC<{ breite: number; hoehe: number; style?: React.CSSProperties }> = ({ breite, hoehe, style }) => (
-  <div
-    style={{
-      position: "absolute",
-      width: breite,
-      height: hoehe,
-      borderRadius: `${breite / 2}px ${breite / 2}px 28px 28px`,
-      overflow: "hidden",
-      border: "10px solid rgba(255,255,255,0.75)",
-      boxShadow: "0 20px 50px rgba(74,58,46,0.18)",
-      ...style,
-    }}
-  >
-    {/* Freisteller im Blazer (701×1024) auf weichem Salbei-Rosé-Verlauf, Gesicht im oberen Drittel */}
-    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, #dfe6d6 0%, #f0ddd0 100%)" }} />
-    <Img src={staticFile("foto-blazer.png")} style={{ position: "absolute", width: breite * 1.2, left: -breite * 0.1, top: hoehe * 0.07 }} />
-  </div>
+// Foto im Blazer ohne Rahmen: Freisteller steht unten rechts vor einem weichen Salbei-Rosé-Kreis
+const Freisteller: React.FC<{ hoehe: number }> = ({ hoehe }) => (
+  <>
+    <div
+      style={{
+        position: "absolute",
+        right: -hoehe * 0.12,
+        bottom: -hoehe * 0.08,
+        width: hoehe * 0.9,
+        height: hoehe * 0.9,
+        borderRadius: "50%",
+        background: "radial-gradient(circle at 40% 35%, #e4ead9 0%, #dfe6d6 45%, #efd9cb 100%)",
+        boxShadow: "0 0 80px 30px rgba(239,217,203,0.35)",
+      }}
+    />
+    <Img src={staticFile("foto-blazer.png")} style={{ position: "absolute", right: -hoehe * 0.06, bottom: 0, height: hoehe }} />
+  </>
 );
 
-const Fuss: React.FC<{ nummer: string; hinweis?: boolean }> = ({ nummer, hinweis }) => (
+const Fuss: React.FC<{ nummer: string; hinweis?: boolean; links?: boolean }> = ({ nummer, hinweis, links }) => (
   <>
     <div style={{ position: "absolute", top: 50, right: 60, fontFamily: SERIF, fontStyle: "italic", fontSize: 34, color: SALBEI }}>{nummer}</div>
-    <div style={{ position: "absolute", left: 0, right: 0, bottom: 34, textAlign: "center", fontFamily: SANS, fontWeight: 500, fontSize: 20, letterSpacing: 1, color: TEXT, opacity: 0.7 }}>
-      {hinweis ? "Keine persönliche Finanzberatung · @aufbruchsvision" : "@aufbruchsvision"}
+    <div style={{ position: "absolute", left: links ? 80 : 0, right: links ? undefined : 0, bottom: 34, textAlign: links ? "left" : "center", fontFamily: SANS, fontWeight: 500, fontSize: 20, letterSpacing: 1, color: TEXT, opacity: 0.7 }}>
+      {hinweis ? <>Keine persönliche Finanzberatung<br />@aufbruchsvision</> : "@aufbruchsvision"}
     </div>
   </>
 );
@@ -69,7 +68,7 @@ export const WeichKarussell: React.FC<FinanzProps> = ({ art, kicker, zahl, titel
     return (
       <AbsoluteFill>
         <Hintergrund />
-        <Bogenfoto breite={titelFolie ? 430 : 400} hoehe={titelFolie ? 620 : 540} style={{ right: titelFolie ? 70 : 60, bottom: titelFolie ? 120 : 110 }} />
+        <Freisteller hoehe={titelFolie ? 860 : 700} />
         <div style={{ position: "absolute", left: 80, top: 120, width: titelFolie ? 900 : 920 }}>
           <Kicker text={kicker} />
           <div style={{ fontFamily: SERIF, fontWeight: 600, fontSize: titelFolie ? 108 : 92, lineHeight: 1.02, color: BRAUN, width: titelFolie ? 860 : 900 }}>{titel}</div>
@@ -85,7 +84,7 @@ export const WeichKarussell: React.FC<FinanzProps> = ({ art, kicker, zahl, titel
         <div style={{ position: "absolute", left: 80, bottom: 120 }}>
           <Knopf text={knopf} />
         </div>
-        <Fuss nummer={nummer} hinweis={!titelFolie} />
+        <Fuss nummer={nummer} hinweis={!titelFolie} links />
       </AbsoluteFill>
     );
   }

@@ -172,7 +172,7 @@ auf Titel- und Schlussfolie. Thema: die 3-Konten-Methode. Vorlage für alle weit
 Immobilien-Karussells: `remotion/src/FinanzKarussell.tsx` (`DREI_KONTEN`),
 Bilder `remotion/out/drei-konten-1.png` bis `-6.png` (`npm run render:drei-konten`).
 Gleiche Texte im Stil «weich & natürlich» (warmer Sand, Salbei, Serifenschrift Cormorant Garamond,
-runde grüne Tipp-Karten, Foto im Blazer im Bogen): `remotion/src/WeichKarussell.tsx`, Bilder `remotion/out/drei-konten-weich-1.png`
+runde grüne Tipp-Karten, Foto im Blazer frei vor weichem Kreis): `remotion/src/WeichKarussell.tsx`, Bilder `remotion/out/drei-konten-weich-1.png`
 bis `-6.png` (`npm run render:drei-konten-weich`).
 Stil-Vorschläge zum Vergleich: `remotion/out/stil-hell.png`, `-dunkel.png`, `-notiz.png`.
 
