@@ -165,6 +165,12 @@ Videos `remotion/out/gedanke-1.mp4` bis `gedanke-3.mp4`.
 npm run render:wasser && npm run render:gedanken
 ```
 
+## Karussell Montag: «Du musst nicht perfekt sein»
+
+5 Folien (1080×1350) mit meinem Foto am See: Folie 1 und 5 scharf mit Text im Himmel,
+Folien 2–4 dasselbe Foto unscharf. Texte in `remotion/src/Karussell.tsx` (`MONTAG`),
+Bilder `remotion/out/montag-1.png` bis `-5.png` (`npm run render:montag`).
+
 ## Vorstellung zum Anpinnen
 
 Karussell mit 4 Folien (1080×1350) im Gedanken-Look: „Hi, ich bin Yvonne. … Mein grosser

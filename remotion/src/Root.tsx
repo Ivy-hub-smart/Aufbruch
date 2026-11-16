@@ -8,6 +8,7 @@ import { KiTippVideo, kiTippSchema } from "./KiTippVideo";
 import { KI_TIPPS, SERIE } from "./kiTipps";
 import { AUTO_FAHRT, FERTIG_MACHEN, FERTIG_MACHEN_DU, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
 import { GEDANKEN, Gedanke, gedankeDauer, gedankeSchema } from "./Gedanke";
+import { MONTAG, Karussell, karussellSchema } from "./Karussell";
 import { PDF_STORIES, VORSTELLUNG, Vorstellung, vorstellungSchema } from "./Vorstellung";
 import { HOOK_PROMPT, Sprechvideo, sprechvideoSchema } from "./Sprechvideo";
 import { STORIES, Story, storySchema } from "./Story";
@@ -128,6 +129,9 @@ export const RemotionRoot: React.FC = () => (
   ))}
   {VORSTELLUNG.map((folie, i) => (
     <Still key={`v${i}`} id={`Vorstellung${i + 1}`} component={Vorstellung} schema={vorstellungSchema} width={1080} height={1350} defaultProps={folie} />
+  ))}
+  {MONTAG.map((folie, i) => (
+    <Still key={`m${i}`} id={`Montag${i + 1}`} component={Karussell} schema={karussellSchema} width={1080} height={1350} defaultProps={folie} />
   ))}
   {PDF_STORIES.map((folie, i) => (
     <Still key={`p${i}`} id={`PdfStory${i + 1}`} component={Vorstellung} schema={vorstellungSchema} width={1080} height={1920} defaultProps={folie} />
