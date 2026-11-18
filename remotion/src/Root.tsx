@@ -9,6 +9,7 @@ import { KI_TIPPS, SERIE } from "./kiTipps";
 import { AUTO_FAHRT, FERTIG_MACHEN, FERTIG_MACHEN_DU, AutoFahrt, autoFahrtDauer, autoFahrtSchema } from "./AutoFahrt";
 import { GEDANKEN, Gedanke, gedankeDauer, gedankeSchema } from "./Gedanke";
 import { DREI_KONTEN, FinanzKarussell, finanzSchema } from "./FinanzKarussell";
+import { REEL_DAUER, ReelWeich } from "./ReelWeich";
 import { VORSTELLUNG_WEICH, WeichKarussell } from "./WeichKarussell";
 import { StilProbe, stilProbeSchema } from "./StilProbe";
 import { MONTAG, Karussell, karussellSchema } from "./Karussell";
@@ -142,6 +143,7 @@ export const RemotionRoot: React.FC = () => (
   {DREI_KONTEN.map((folie, i) => (
     <Still key={`w${i}`} id={`DreiKontenWeich${i + 1}`} component={WeichKarussell} schema={finanzSchema} width={1080} height={1350} defaultProps={folie} />
   ))}
+  <Composition id="ReelNichtsUebrig" component={ReelWeich} durationInFrames={REEL_DAUER} fps={30} width={1080} height={1920} />
   {VORSTELLUNG_WEICH.map((folie, i) => (
     <Still key={`vw${i}`} id={`VorstellungWeich${i + 1}`} component={WeichKarussell} schema={finanzSchema} width={1080} height={1350} defaultProps={folie} />
   ))}

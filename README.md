@@ -176,6 +176,13 @@ runde grüne Tipp-Karten, Foto im Blazer frei vor weichem Kreis): `remotion/src/
 bis `-6.png` (`npm run render:drei-konten-weich`).
 Stil-Vorschläge zum Vergleich: `remotion/out/stil-hell.png`, `-dunkel.png`, `-notiz.png`.
 
+## Reel «Ende Monat nichts übrig?» (weicher Stil)
+
+12 Sekunden (1080×1920) mit ruhigem Klavier, Foto im Blazer unten: Hook «Ende Monat nichts übrig?»,
+«Das liegt nicht an dir.», die 3 Konten als grüne Pillen, «Alle Schritte findest du auf meinem Profil 📌».
+Lockt zum Karussell. Vorlage `remotion/src/ReelWeich.tsx`, Video `remotion/out/reel-nichts-uebrig.mp4`
+(`npm run render:reel-nichts-uebrig`).
+
 ## Neue Vorstellung zum Anpinnen (weicher Stil)
 
 4 Folien: «Hi, ich bin Yvonne. Ich zeige dir, wie du finanziell freier wirst.», Warum ich das mache,

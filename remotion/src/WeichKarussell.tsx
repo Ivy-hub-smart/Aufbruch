@@ -43,15 +43,15 @@ export const VORSTELLUNG_WEICH: FinanzProps[] = [
 
 // Stil «weich & natürlich» (4:5): warmer Sand, Salbei & Rosé als weiche Formen,
 // elegante Serifenschrift, runde grüne Tipp-Karten, Foto im Blazer frei vor weichem Kreis. Nutzt dieselben Texte wie Stil A.
-const SERIF = "'Cormorant Garamond', Georgia, serif";
-const SANS = "Montserrat, sans-serif";
-const BRAUN = "#4a3a2e";
-const TEXT = "#6b5a4c";
-const SALBEI = "#8a9a7b";
-const GRUEN = "#5e7d62"; // sanftes Grün für Tipp-Karten und Knöpfe
+export const SERIF = "'Cormorant Garamond', Georgia, serif";
+export const SANS = "Montserrat, sans-serif";
+export const BRAUN = "#4a3a2e";
+export const TEXT = "#6b5a4c";
+export const SALBEI = "#8a9a7b";
+export const GRUEN = "#5e7d62"; // sanftes Grün für Tipp-Karten und Knöpfe
 
 // weiche, unscharfe Farbflecken im Hintergrund
-const Hintergrund: React.FC = () => (
+export const Hintergrund: React.FC = () => (
   <AbsoluteFill style={{ background: "linear-gradient(165deg, #f4ede4 0%, #ebe0d2 100%)", overflow: "hidden" }}>
     <div style={{ position: "absolute", left: -220, top: -180, width: 720, height: 720, borderRadius: "50%", background: "#d6ddcc", filter: "blur(90px)", opacity: 0.9 }} />
     <div style={{ position: "absolute", right: -260, bottom: -200, width: 820, height: 820, borderRadius: "50%", background: "#efd6c8", filter: "blur(110px)", opacity: 0.85 }} />
@@ -71,7 +71,7 @@ const Knopf: React.FC<{ text?: string }> = ({ text }) =>
   ) : null;
 
 // Foto im Blazer ohne Rahmen: Freisteller steht unten rechts vor einem weichen Salbei-Rosé-Kreis
-const Freisteller: React.FC<{ hoehe: number }> = ({ hoehe }) => (
+export const Freisteller: React.FC<{ hoehe: number }> = ({ hoehe }) => (
   <>
     <div
       style={{
